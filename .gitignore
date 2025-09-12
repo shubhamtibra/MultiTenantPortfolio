@@ -8,8 +8,9 @@ yarn-error.log*
 /frontend/build
 /backend/dist
 
-# Environment variables
 
+# Uploaded files
+backend/uploads/
 
 # Logs
 logs

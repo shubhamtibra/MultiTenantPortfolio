@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './PortfolioBuilder.css';
 import { getApiBaseUrl } from '../utils/domain';
+import ImageUpload from './ImageUpload';
 
 const PortfolioBuilder = ({ websiteProfileData, onComplete }) => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -295,12 +296,11 @@ const PortfolioBuilder = ({ websiteProfileData, onComplete }) => {
             </div>
 
             <div className="form-group">
-              <label>Company Logo URL (Optional)</label>
-              <input
-                type="url"
-                value={overviewData.companyLogo}
-                onChange={(e) => handleOverviewChange('companyLogo', e.target.value)}
-                placeholder="https://example.com/logo.png"
+              <ImageUpload
+                label="Company Logo (Optional)"
+                currentImage={overviewData.companyLogo}
+                onImageChange={(imageUrl) => handleOverviewChange('companyLogo', imageUrl)}
+                placeholder="Upload your company logo"
               />
             </div>
 
@@ -363,12 +363,11 @@ const PortfolioBuilder = ({ websiteProfileData, onComplete }) => {
                 </div>
 
                 <div className="form-group">
-                  <label>Service Logo (URL)</label>
-                  <input
-                    type="url"
-                    value={section.logo}
-                    onChange={(e) => handleSectionChange(sectionIndex, 'logo', e.target.value)}
-                    placeholder="https://example.com/service-icon.png"
+                  <ImageUpload
+                    label="Service Logo (Optional)"
+                    currentImage={section.logo}
+                    onImageChange={(imageUrl) => handleSectionChange(sectionIndex, 'logo', imageUrl)}
+                    placeholder="Upload service logo"
                   />
                 </div>
 

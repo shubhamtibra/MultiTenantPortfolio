@@ -1,5 +1,8 @@
 const express = require('express');
 const cors = require('cors');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 const loadDb = require('./models');
@@ -13,23 +16,61 @@ app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
+
     // Allow localhost and subdomains
     if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
       return callback(null, true);
     }
-    
+
     // Allow any subdomain pattern for development
     if (origin.match(/^https?:\/\/[^.]+\.localhost(:\d+)?$/)) {
       return callback(null, true);
     }
-    
+
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Multer configuration for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    // Generate unique filename with timestamp
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  // Accept only image files
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only image files are allowed!'), false);
+  }
+};
+
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  }
+});
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.get('/', (req, res) => {
@@ -40,6 +81,45 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// File upload endpoint
+app.post('/api/upload', upload.single('logo'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const fileUrl = `/uploads/${req.file.filename}`;
+
+    res.json({
+      success: true,
+      message: 'File uploaded successfully',
+      fileUrl: fileUrl,
+      filename: req.file.filename
+    });
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({ error: 'Failed to upload file' });
+  }
+});
+
+// Delete uploaded file endpoint
+app.delete('/api/upload/:filename', (req, res) => {
+  try {
+    const { filename } = req.params;
+    const filePath = path.join(__dirname, 'uploads', filename);
+
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      res.json({ success: true, message: 'File deleted successfully' });
+    } else {
+      res.status(404).json({ error: 'File not found' });
+    }
+  } catch (error) {
+    console.error('Delete error:', error);
+    res.status(500).json({ error: 'Failed to delete file' });
+  }
+});
+
 // API endpoint to create user and website profile
 app.post('/api/register', async (req, res) => {
   try {
@@ -47,21 +127,21 @@ app.post('/api/register', async (req, res) => {
 
     // Validate input
     if (!email || !subdomain) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Email and subdomain are required',
-        success: false 
+        success: false
       });
     }
 
     // Check if user already exists
     const existingUser = await db.User.findOne({ where: { email } });
-    
+
     if (existingUser) {
       // User exists - check if they have a website profile
-      const existingProfile = await db.WebsiteProfile.findOne({ 
-        where: { userPk: existingUser.pk } 
+      const existingProfile = await db.WebsiteProfile.findOne({
+        where: { userPk: existingUser.pk }
       });
-      
+
       if (existingProfile) {
         // User has existing profile - allow login
         return res.status(200).json({
@@ -83,18 +163,18 @@ app.post('/api/register', async (req, res) => {
         // User exists but no profile - check if subdomain is available
         const existingSubdomain = await db.WebsiteProfile.findOne({ where: { subdomain } });
         if (existingSubdomain) {
-          return res.status(409).json({ 
+          return res.status(409).json({
             error: 'Subdomain is already taken',
-            success: false 
+            success: false
           });
         }
-        
+
         // Create website profile for existing user
         const websiteProfile = await db.WebsiteProfile.create({
           userPk: existingUser.pk,
           subdomain
         });
-        
+
         return res.status(201).json({
           success: true,
           message: 'Website profile created for existing user',
@@ -116,9 +196,9 @@ app.post('/api/register', async (req, res) => {
     // Check if subdomain is already taken for new users
     const existingSubdomain = await db.WebsiteProfile.findOne({ where: { subdomain } });
     if (existingSubdomain) {
-      return res.status(409).json({ 
+      return res.status(409).json({
         error: 'Subdomain is already taken',
-        success: false 
+        success: false
       });
     }
 
@@ -149,7 +229,7 @@ app.post('/api/register', async (req, res) => {
 
   } catch (error) {
     console.error('Registration error:', error);
-    
+
     // Handle Sequelize validation errors
     if (error.name === 'SequelizeValidationError') {
       return res.status(400).json({
@@ -159,9 +239,9 @@ app.post('/api/register', async (req, res) => {
       });
     }
 
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Internal server error',
-      success: false 
+      success: false
     });
   }
 });
@@ -173,15 +253,15 @@ app.post('/api/portfolio/overview', async (req, res) => {
 
     // Validate input
     if (!websiteProfilePk || !companyName || !companyDescription || !companyTitle || !companyAddress || !companyPhone || !companyEmail) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'All company details are required',
-        success: false 
+        success: false
       });
     }
 
     // Check if overview already exists
     const existingOverview = await db.WebsiteProfileOverview.findOne({ where: { websiteProfilePk } });
-    
+
     let overview;
     if (existingOverview) {
       // Update existing overview
@@ -218,9 +298,9 @@ app.post('/api/portfolio/overview', async (req, res) => {
 
   } catch (error) {
     console.error('Overview save error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Internal server error',
-      success: false 
+      success: false
     });
   }
 });
@@ -231,9 +311,9 @@ app.post('/api/portfolio/sections', async (req, res) => {
     const { websiteProfilePk, sections } = req.body;
 
     if (!websiteProfilePk || !sections || !Array.isArray(sections)) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Website profile ID and sections array are required',
-        success: false 
+        success: false
       });
     }
     await db.WebsiteProfileSection.destroy({ where: { websiteProfilePk } });
@@ -280,9 +360,9 @@ app.post('/api/portfolio/sections', async (req, res) => {
 
   } catch (error) {
     console.error('Sections save error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Internal server error',
-      success: false 
+      success: false
     });
   }
 });
@@ -303,9 +383,9 @@ app.get('/api/portfolio/:websiteProfilePk', async (req, res) => {
     });
 
     if (!websiteProfile) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         error: 'Website profile not found',
-        success: false 
+        success: false
       });
     }
 
@@ -336,9 +416,9 @@ app.get('/api/portfolio/:websiteProfilePk', async (req, res) => {
 
   } catch (error) {
     console.error('Portfolio fetch error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Internal server error',
-      success: false 
+      success: false
     });
   }
 });
@@ -360,9 +440,9 @@ app.get('/api/portfolio/subdomain/:subdomain', async (req, res) => {
     });
 
     if (!websiteProfile) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         error: 'Portfolio not found for this subdomain',
-        success: false 
+        success: false
       });
     }
 
@@ -393,9 +473,9 @@ app.get('/api/portfolio/subdomain/:subdomain', async (req, res) => {
 
   } catch (error) {
     console.error('Portfolio fetch by subdomain error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Internal server error',
-      success: false 
+      success: false
     });
   }
 });
