@@ -38,9 +38,7 @@ const PortfolioPreview = ({ portfolioData, onEdit, onPublish }) => {
           </button>
           <button className="btn-publish" onClick={() => {
             onPublish();
-            // Redirect to subdomain
-            const subdomainUrl = getSubdomainUrl(websiteProfile.subdomain);
-            window.open(subdomainUrl, '_blank');
+
           }}>
             Host Your Site
           </button>
