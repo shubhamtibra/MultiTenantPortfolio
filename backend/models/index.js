@@ -14,8 +14,9 @@ let sequelizeInstance = null
 
 const initSequelize = () => {
   if (sequelizeInstance === null) {
-    sequelizeInstance = new Sequelize(process.env.DATABASE_URL, {
+    sequelizeInstance = new Sequelize("postgres://shubham:123456@localhost:5432/multitenant_portfolio", {
       dialect: 'postgres',
+      dialectModule: require('pg'),
       logging: false,
       pool: {
         max: 10,
@@ -30,6 +31,7 @@ const validateSequelizeInstance = async (sequelizeInstance) => {
     console.error('Sequelize unable to connect to the database:', err)
     exitFatally(1000)
   })
+  await sequelizeInstance.sync({force: true})
   console.log('Sequelize connection successfully established.')
 }
 

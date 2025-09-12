@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
                 defaultValue: DataTypes.UUIDV4,
             },
             websiteProfilePk: {
-                type: DataTypes.STRING,
+                type: DataTypes.UUID,
                 allowNull: false,
                 references: {
                     model: 'WebsiteProfile',
@@ -24,7 +24,7 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.TEXT,
                 allowNull: false,
             },
-            butttonText: {
+            buttonText: {
                 type: DataTypes.STRING,
                 allowNull: false,
             },
@@ -41,6 +41,7 @@ module.exports = (sequelize, DataTypes) => {
 
     WebsiteProfileSection.associate = (db) => {
         db.WebsiteProfileSection.belongsTo(db.WebsiteProfile, { foreignKey: 'websiteProfilePk' })
+        db.WebsiteProfileSection.hasMany(db.WebsiteProfileSectionItems, { foreignKey: 'websiteProfileSectionPk' })
     }
 
     return WebsiteProfileSection

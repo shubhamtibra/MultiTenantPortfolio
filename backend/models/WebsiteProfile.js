@@ -12,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: DataTypes.UUIDV4,
       },
       userPk: {
-        type: DataTypes.STRING,
+        type: DataTypes.UUID,
         allowNull: false,
         references: {
           model: 'User',
@@ -22,12 +22,6 @@ module.exports = (sequelize, DataTypes) => {
       domain: {
         type: DataTypes.STRING,
         allowNull: false,
-      },
-      __modelName: {
-        type: DataTypes.VIRTUAL,
-        get() {
-          return this.constructor.name
-        },
       },
     },
     {

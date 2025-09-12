@@ -14,7 +14,12 @@
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "lodash": "^4.17.21",
+    "sequelize": "^6.35.0",
+    "sequelize-cursor-pagination": "^2.2.0",
+    "pg": "^8.11.0",
+    "pg-hstore": "^2.3.4"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

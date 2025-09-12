@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
                 defaultValue: DataTypes.UUIDV4,
             },
             websiteProfileSectionPk: {
-                type: DataTypes.STRING,
+                type: DataTypes.UUID,
                 allowNull: false,
                 references: {
                     model: 'WebsiteProfileSection',

@@ -10,7 +10,7 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: DataTypes.UUIDV4,
       },
       websiteProfilePk: {
-        type: DataTypes.STRING,
+        type: DataTypes.UUID,
         allowNull: false,
         references: {
           model: 'WebsiteProfile',
@@ -42,10 +42,6 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       companyEmail: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      companyLocation: {
         type: DataTypes.STRING,
         allowNull: false,
       },
