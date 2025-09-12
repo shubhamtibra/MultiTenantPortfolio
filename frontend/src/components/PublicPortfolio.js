@@ -1,12 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import './PublicPortfolio.css';
 import { getApiBaseUrl, getMainAppUrl } from '../utils/domain';
+import QuoteModal from './QuoteModal';
 
 const PublicPortfolio = ({ subdomain }) => {
   const [portfolioData, setPortfolioData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedCard, setExpandedCard] = useState(null);
+  const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState('');
+
+  const handleQuoteRequest = (serviceName) => {
+    setSelectedService(serviceName);
+    setIsQuoteModalOpen(true);
+  };
+
+  const handleCloseQuoteModal = () => {
+    setIsQuoteModalOpen(false);
+    setSelectedService('');
+  };
 
   useEffect(() => {
     const fetchPortfolioData = async () => {
@@ -135,8 +148,8 @@ const PublicPortfolio = ({ subdomain }) => {
             <h2 className="services-title">Our Services</h2>
             <div className="services-grid">
               {sections.map((section, index) => (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className={`service-card ${expandedCard === index ? 'expanded' : ''}`}
                   onClick={() => setExpandedCard(expandedCard === index ? null : index)}
                 >
@@ -150,7 +163,7 @@ const PublicPortfolio = ({ subdomain }) => {
                   <div className="service-content">
                     <h3 className="service-title">{section.title}</h3>
                     <p className="service-description">{section.description}</p>
-                    
+
                     {section.buttonText && (
                       <button className="service-button" onClick={(e) => e.stopPropagation()}>
                         {section.buttonText}
@@ -173,7 +186,13 @@ const PublicPortfolio = ({ subdomain }) => {
                             </li>
                           ))}
                         </ul>
-                        <button className="get-quote-button" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          className="get-quote-button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleQuoteRequest(section.title);
+                          }}
+                        >
                           Get Free Quote
                         </button>
                       </div>
@@ -244,6 +263,13 @@ const PublicPortfolio = ({ subdomain }) => {
           </p>
         </div>
       </footer>
+
+      {/* Quote Modal */}
+      <QuoteModal
+        isOpen={isQuoteModalOpen}
+        onClose={handleCloseQuoteModal}
+        serviceName={selectedService}
+      />
     </div>
   );
 };

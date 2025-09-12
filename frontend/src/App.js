@@ -10,7 +10,7 @@ function App() {
   const [websiteProfileData, setWebsiteProfileData] = useState(null);
   const [portfolioData, setPortfolioData] = useState(null);
   const [subdomainDomain, setSubdomainDomain] = useState(null);
-  
+
   const [formData, setFormData] = useState({
     email: '',
     subdomain: ''
@@ -23,7 +23,7 @@ function App() {
     const detectSubdomain = () => {
       const hostname = getCurrentDomain();
       const baseDomain = getBaseDomain();
-      
+
       // Check if we're on a subdomain (not the base domain or www)
       if (hostname !== baseDomain && hostname !== `www.${baseDomain}` && !hostname.startsWith('www.')) {
         // Extract the subdomain part (everything before the base domain)
@@ -35,7 +35,7 @@ function App() {
           return;
         }
       }
-      
+
       // Default to landing page for base domain
       setCurrentView('landing');
     };
@@ -71,36 +71,36 @@ function App() {
       if (data.success) {
         setWebsiteProfileData(data.data);
         setFormData({ email: '', subdomain: '' });
-        
+
         if (data.isExistingUser) {
-          setMessage({ 
-            text: data.message, 
-            type: 'success' 
+          setMessage({
+            text: data.message,
+            type: 'success'
           });
-          
+
           // For existing users, try to load their portfolio data
           loadExistingPortfolio(data.data.websiteProfile.pk);
         } else {
-          setMessage({ 
-            text: 'Registration successful! Now let\'s build your portfolio.', 
-            type: 'success' 
+          setMessage({
+            text: 'Registration successful! Now let\'s build your portfolio.',
+            type: 'success'
           });
-          
+
           // Move to builder after a short delay for new users
           setTimeout(() => {
             setCurrentView('builder');
           }, 2000);
         }
       } else {
-        setMessage({ 
-          text: data.error || 'Registration failed. Please try again.', 
-          type: 'error' 
+        setMessage({
+          text: data.error || 'Registration failed. Please try again.',
+          type: 'error'
         });
       }
     } catch (error) {
-      setMessage({ 
-        text: 'Network error. Please check if the backend server is running.', 
-        type: 'error' 
+      setMessage({
+        text: 'Network error. Please check if the backend server is running.',
+        type: 'error'
       });
     } finally {
       setLoading(false);
@@ -112,7 +112,7 @@ function App() {
       const apiBaseUrl = getApiBaseUrl();
       const response = await fetch(`${apiBaseUrl}/api/portfolio/${websiteProfilePk}`);
       const data = await response.json();
-      
+
       if (data.success && data.data.overview) {
         // User has existing portfolio data - go to preview
         setPortfolioData({
@@ -120,21 +120,21 @@ function App() {
           overview: data.data.overview,
           sections: data.data.sections || []
         });
-        
+
         setTimeout(() => {
           setCurrentView('preview');
-          setMessage({ 
-            text: 'Welcome back! Here\'s your portfolio. You can edit or publish it.', 
-            type: 'success' 
+          setMessage({
+            text: 'Welcome back! Here\'s your portfolio. You can edit or publish it.',
+            type: 'success'
           });
         }, 2000);
       } else {
         // User exists but no portfolio data - go to builder
         setTimeout(() => {
           setCurrentView('builder');
-          setMessage({ 
-            text: 'Welcome back! Let\'s complete your portfolio setup.', 
-            type: 'success' 
+          setMessage({
+            text: 'Welcome back! Let\'s complete your portfolio setup.',
+            type: 'success'
           });
         }, 2000);
       }
@@ -143,9 +143,9 @@ function App() {
       // Default to builder if there's an error
       setTimeout(() => {
         setCurrentView('builder');
-        setMessage({ 
-          text: 'Welcome back! Let\'s set up your portfolio.', 
-          type: 'success' 
+        setMessage({
+          text: 'Welcome back! Let\'s set up your portfolio.',
+          type: 'success'
         });
       }, 2000);
     }
@@ -183,7 +183,7 @@ function App() {
         <button className="back-button" onClick={handleBackToLanding}>
           ← Back to Landing
         </button>
-        <PortfolioBuilder 
+        <PortfolioBuilder
           websiteProfileData={websiteProfileData}
           onComplete={handlePortfolioComplete}
         />
@@ -197,7 +197,7 @@ function App() {
         <button className="back-button" onClick={handleBackToLanding}>
           ← Back to Landing
         </button>
-        <PortfolioPreview 
+        <PortfolioPreview
           portfolioData={portfolioData}
           onEdit={handleEditPortfolio}
           onPublish={handlePublish}
@@ -215,13 +215,13 @@ function App() {
               Create Your Professional Portfolio
             </h1>
             <p className="hero-subtitle">
-              Build a stunning multi-tenant portfolio website in minutes. 
+              Build a stunning multi-tenant portfolio website in minutes.
               Perfect for professionals, freelancers, and agencies.
             </p>
             <p className="login-note">
               Already have an account? Just enter your email and domain to continue.
             </p>
-            
+
             <div className="registration-form-container">
               <form onSubmit={handleSubmit} className="registration-form">
                 <div className="form-group">
@@ -236,7 +236,7 @@ function App() {
                     required
                   />
                 </div>
-                
+
                 <div className="form-group">
                   <label htmlFor="subdomain">Subdomain</label>
                   <input
@@ -250,16 +250,16 @@ function App() {
                   />
                   <small className="field-help">Your portfolio will be available at: <strong>{getPortfolioUrl(formData.subdomain || 'yourportfolio')}</strong></small>
                 </div>
-                
-                <button 
-                  type="submit" 
+
+                <button
+                  type="submit"
                   className="submit-button"
                   disabled={loading}
                 >
                   {loading ? 'Processing...' : 'Get Started / Login'}
                 </button>
               </form>
-              
+
               {message.text && (
                 <div className={`message ${message.type}`}>
                   {message.text}
@@ -267,7 +267,7 @@ function App() {
               )}
             </div>
           </div>
-          
+
           <div className="features">
             <div className="feature">
               <div className="feature-icon">🚀</div>

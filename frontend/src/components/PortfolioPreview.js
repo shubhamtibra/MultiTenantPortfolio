@@ -1,10 +1,23 @@
 import React, { useState } from 'react';
 import './PortfolioPreview.css';
 import { getSubdomainUrl } from '../utils/domain';
+import QuoteModal from './QuoteModal';
 
 const PortfolioPreview = ({ portfolioData, onEdit, onPublish }) => {
   const { websiteProfile, overview, sections } = portfolioData;
   const [expandedCard, setExpandedCard] = useState(null);
+  const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState('');
+
+  const handleQuoteRequest = (serviceName) => {
+    setSelectedService(serviceName);
+    setIsQuoteModalOpen(true);
+  };
+
+  const handleCloseQuoteModal = () => {
+    setIsQuoteModalOpen(false);
+    setSelectedService('');
+  };
 
   const renderStars = (rating) => {
     return Array.from({ length: 5 }, (_, index) => (
@@ -73,8 +86,8 @@ const PortfolioPreview = ({ portfolioData, onEdit, onPublish }) => {
           <div className="services-container">
             <div className="services-grid">
               {sections.map((section, index) => (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className={`service-card ${expandedCard === index ? 'expanded' : ''}`}
                   onClick={() => setExpandedCard(expandedCard === index ? null : index)}
                 >
@@ -92,29 +105,36 @@ const PortfolioPreview = ({ portfolioData, onEdit, onPublish }) => {
                       {section.buttonText}
                     </button>
 
-                    {expandedCard === index && section.items && section.items.length > 0 && (
-                      <div className="service-details">
-                        <h4>What's Included:</h4>
-                        <ul className="service-items">
-                          {section.items.map((item, itemIndex) => (
-                            <li key={itemIndex} className="service-item">
-                              <span className="item-check">✓</span>
-                              <div className="item-content">
-                                <strong>{item.itemTitle}</strong>
-                                {item.itemDescription && (
-                                  <p>{item.itemDescription}</p>
-                                )}
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                        <button className="get-quote-button" onClick={(e) => e.stopPropagation()}>
-                          Get Free Quote
-                        </button>
-                      </div>
-                    )}
+                    {expandedCard === index && (section.items || section.WebsiteProfileSectionItems) &&
+                      ((section.items && section.items.length > 0) || (section.WebsiteProfileSectionItems && section.WebsiteProfileSectionItems.length > 0)) && (
+                        <div className="service-details">
+                          <h4>What's Included:</h4>
+                          <ul className="service-items">
+                            {(section.items || section.WebsiteProfileSectionItems || []).map((item, itemIndex) => (
+                              <li key={itemIndex} className="service-item">
+                                <span className="item-check">✓</span>
+                                <div className="item-content">
+                                  <strong>{item.title || item.itemTitle}</strong>
+                                  {(item.description || item.itemDescription) && (
+                                    <p>{item.description || item.itemDescription}</p>
+                                  )}
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                          <button
+                            className="get-quote-button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleQuoteRequest(section.title);
+                            }}
+                          >
+                            Get Free Quote
+                          </button>
+                        </div>
+                      )}
                   </div>
-                  {section.items && section.items.length > 0 && (
+                  {((section.items && section.items.length > 0) || (section.WebsiteProfileSectionItems && section.WebsiteProfileSectionItems.length > 0)) && (
                     <div className="expand-indicator">
                       {expandedCard === index ? '−' : '+'}
                     </div>
@@ -143,6 +163,13 @@ const PortfolioPreview = ({ portfolioData, onEdit, onPublish }) => {
           <span className="domain-url">{getSubdomainUrl(websiteProfile.subdomain)}</span>
         </div>
       </div>
+
+      {/* Quote Modal */}
+      <QuoteModal
+        isOpen={isQuoteModalOpen}
+        onClose={handleCloseQuoteModal}
+        serviceName={selectedService}
+      />
     </div>
   );
 };

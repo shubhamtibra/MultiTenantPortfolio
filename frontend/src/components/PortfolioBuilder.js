@@ -39,14 +39,14 @@ const PortfolioBuilder = ({ websiteProfileData, onComplete }) => {
           const apiBaseUrl = getApiBaseUrl();
           const response = await fetch(`${apiBaseUrl}/api/portfolio/${websiteProfileData.websiteProfile.pk}`);
           const data = await response.json();
-          
+
           if (data.success) {
             // Pre-populate overview data if it exists
             if (data.data.overview) {
               setOverviewData(data.data.overview);
               setIsExistingUser(true);
             }
-            
+
             // Pre-populate sections data if it exists
             if (data.data.sections && data.data.sections.length > 0) {
               const formattedSections = data.data.sections.map(section => ({
@@ -80,7 +80,7 @@ const PortfolioBuilder = ({ websiteProfileData, onComplete }) => {
   };
 
   const handleSectionChange = (sectionIndex, field, value) => {
-    setSections(prev => prev.map((section, index) => 
+    setSections(prev => prev.map((section, index) =>
       index === sectionIndex ? { ...section, [field]: value } : section
     ));
   };
@@ -99,36 +99,36 @@ const PortfolioBuilder = ({ websiteProfileData, onComplete }) => {
   };
 
   const addSectionItem = (sectionIndex) => {
-    setSections(prev => prev.map((section, index) => 
-      index === sectionIndex 
-        ? { 
-            ...section, 
-            items: [...section.items, { title: '', description: '', buttonText: 'Learn More' }] 
-          }
+    setSections(prev => prev.map((section, index) =>
+      index === sectionIndex
+        ? {
+          ...section,
+          items: [...section.items, { title: '', description: '', buttonText: 'Learn More' }]
+        }
         : section
     ));
   };
 
   const removeSectionItem = (sectionIndex, itemIndex) => {
-    setSections(prev => prev.map((section, index) => 
-      index === sectionIndex 
-        ? { 
-            ...section, 
-            items: section.items.filter((_, i) => i !== itemIndex)
-          }
+    setSections(prev => prev.map((section, index) =>
+      index === sectionIndex
+        ? {
+          ...section,
+          items: section.items.filter((_, i) => i !== itemIndex)
+        }
         : section
     ));
   };
 
   const handleSectionItemChange = (sectionIndex, itemIndex, field, value) => {
-    setSections(prev => prev.map((section, index) => 
-      index === sectionIndex 
+    setSections(prev => prev.map((section, index) =>
+      index === sectionIndex
         ? {
-            ...section,
-            items: section.items.map((item, i) => 
-              i === itemIndex ? { ...item, [field]: value } : item
-            )
-          }
+          ...section,
+          items: section.items.map((item, i) =>
+            i === itemIndex ? { ...item, [field]: value } : item
+          )
+        }
         : section
     ));
   };
@@ -226,7 +226,7 @@ const PortfolioBuilder = ({ websiteProfileData, onComplete }) => {
         <div className="overview-form">
           <h2>Company Overview</h2>
           <p>{isExistingUser ? 'Update your business information below.' : 'Tell us about your business to create an engaging company profile.'}</p>
-          
+
           <div className="form-grid">
             <div className="form-group">
               <label>Company Name *</label>
@@ -320,7 +320,7 @@ const PortfolioBuilder = ({ websiteProfileData, onComplete }) => {
           </div>
 
           <div className="form-actions">
-            <button 
+            <button
               className="btn-primary"
               onClick={saveOverview}
               disabled={loading}
@@ -341,7 +341,7 @@ const PortfolioBuilder = ({ websiteProfileData, onComplete }) => {
               <div className="section-header">
                 <h3>Service {sectionIndex + 1}</h3>
                 {sections.length > 1 && (
-                  <button 
+                  <button
                     className="btn-remove"
                     onClick={() => removeSection(sectionIndex)}
                   >
@@ -401,7 +401,7 @@ const PortfolioBuilder = ({ websiteProfileData, onComplete }) => {
                   <div key={itemIndex} className="item-card">
                     <div className="item-header">
                       <h5>Item {itemIndex + 1}</h5>
-                      <button 
+                      <button
                         className="btn-remove-small"
                         onClick={() => removeSectionItem(sectionIndex, itemIndex)}
                       >
@@ -430,7 +430,7 @@ const PortfolioBuilder = ({ websiteProfileData, onComplete }) => {
                     </div>
                   </div>
                 ))}
-                <button 
+                <button
                   className="btn-add-item"
                   onClick={() => addSectionItem(sectionIndex)}
                 >
@@ -445,13 +445,13 @@ const PortfolioBuilder = ({ websiteProfileData, onComplete }) => {
           </button>
 
           <div className="form-actions">
-            <button 
+            <button
               className="btn-secondary"
               onClick={() => setCurrentStep(1)}
             >
               Back
             </button>
-            <button 
+            <button
               className="btn-primary"
               onClick={saveSections}
               disabled={loading}

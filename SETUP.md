@@ -44,7 +44,18 @@
    npm install
    ```
 
-3. Start the frontend development server:
+3. Create environment file:
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Edit `.env` file and configure the backend API URL:
+   ```env
+   REACT_APP_API_BASE_URL=http://localhost:5000
+   REACT_APP_ENV=development
+   ```
+
+4. Start the frontend development server:
    ```bash
    npm start
    ```
