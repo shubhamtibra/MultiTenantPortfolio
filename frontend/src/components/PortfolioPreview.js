@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './PortfolioPreview.css';
 
 const PortfolioPreview = ({ portfolioData, onEdit, onPublish }) => {
   const { websiteProfile, overview, sections } = portfolioData;
+  const [expandedCard, setExpandedCard] = useState(null);
 
   const renderStars = (rating) => {
     return Array.from({ length: 5 }, (_, index) => (
@@ -21,8 +22,12 @@ const PortfolioPreview = ({ portfolioData, onEdit, onPublish }) => {
           <button className="btn-edit" onClick={onEdit}>
             Edit Portfolio
           </button>
-          <button className="btn-publish" onClick={onPublish}>
-            Publish Website
+          <button className="btn-publish" onClick={() => {
+            onPublish();
+            // Redirect to subdomain
+            window.open(`http://${websiteProfile.domain}:3000`, '_blank');
+          }}>
+            Host Your Site
           </button>
         </div>
       </div>
@@ -66,18 +71,26 @@ const PortfolioPreview = ({ portfolioData, onEdit, onPublish }) => {
           <div className="services-container">
             <div className="services-grid">
               {sections.map((section, index) => (
-                <div key={index} className="service-card">
+                <div 
+                  key={index} 
+                  className={`service-card ${expandedCard === index ? 'expanded' : ''}`}
+                  onClick={() => setExpandedCard(expandedCard === index ? null : index)}
+                >
                   <div className="service-image">
-                    <div className="service-icon">🔧</div>
+                    {section.logo ? (
+                      <img src={section.logo} alt={section.title} className="service-logo" />
+                    ) : (
+                      <div className="service-icon">🔧</div>
+                    )}
                   </div>
                   <div className="service-content">
                     <h3 className="service-title">{section.title}</h3>
                     <p className="service-description">{section.description}</p>
-                    <button className="service-button">
+                    <button className="service-button" onClick={(e) => e.stopPropagation()}>
                       {section.buttonText}
                     </button>
 
-                    {section.items && section.items.length > 0 && (
+                    {expandedCard === index && section.items && section.items.length > 0 && (
                       <div className="service-details">
                         <h4>What's Included:</h4>
                         <ul className="service-items">
@@ -93,12 +106,17 @@ const PortfolioPreview = ({ portfolioData, onEdit, onPublish }) => {
                             </li>
                           ))}
                         </ul>
-                        <button className="get-quote-button">
+                        <button className="get-quote-button" onClick={(e) => e.stopPropagation()}>
                           Get Free Quote
                         </button>
                       </div>
                     )}
                   </div>
+                  {section.items && section.items.length > 0 && (
+                    <div className="expand-indicator">
+                      {expandedCard === index ? '−' : '+'}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

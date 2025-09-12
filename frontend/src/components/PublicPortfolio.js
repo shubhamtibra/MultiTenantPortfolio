@@ -5,6 +5,7 @@ const PublicPortfolio = ({ domain }) => {
   const [portfolioData, setPortfolioData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [expandedCard, setExpandedCard] = useState(null);
 
   useEffect(() => {
     const fetchPortfolioData = async () => {
@@ -132,21 +133,29 @@ const PublicPortfolio = ({ domain }) => {
             <h2 className="services-title">Our Services</h2>
             <div className="services-grid">
               {sections.map((section, index) => (
-                <div key={index} className="service-card">
+                <div 
+                  key={index} 
+                  className={`service-card ${expandedCard === index ? 'expanded' : ''}`}
+                  onClick={() => setExpandedCard(expandedCard === index ? null : index)}
+                >
                   <div className="service-image">
-                    <div className="service-icon">🔧</div>
+                    {section.logo ? (
+                      <img src={section.logo} alt={section.title} className="service-logo" />
+                    ) : (
+                      <div className="service-icon">🔧</div>
+                    )}
                   </div>
                   <div className="service-content">
                     <h3 className="service-title">{section.title}</h3>
                     <p className="service-description">{section.description}</p>
                     
                     {section.buttonText && (
-                      <button className="service-button">
+                      <button className="service-button" onClick={(e) => e.stopPropagation()}>
                         {section.buttonText}
                       </button>
                     )}
 
-                    {section.WebsiteProfileSectionItems && section.WebsiteProfileSectionItems.length > 0 && (
+                    {expandedCard === index && section.WebsiteProfileSectionItems && section.WebsiteProfileSectionItems.length > 0 && (
                       <div className="service-details">
                         <h4>What's Included:</h4>
                         <ul className="service-items">
@@ -162,12 +171,17 @@ const PublicPortfolio = ({ domain }) => {
                             </li>
                           ))}
                         </ul>
-                        <button className="get-quote-button">
+                        <button className="get-quote-button" onClick={(e) => e.stopPropagation()}>
                           Get Free Quote
                         </button>
                       </div>
                     )}
                   </div>
+                  {section.WebsiteProfileSectionItems && section.WebsiteProfileSectionItems.length > 0 && (
+                    <div className="expand-indicator">
+                      {expandedCard === index ? '−' : '+'}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

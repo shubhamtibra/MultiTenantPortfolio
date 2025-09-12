@@ -189,13 +189,14 @@ app.post('/api/portfolio/sections', async (req, res) => {
     const createdSections = [];
 
     for (const sectionData of sections) {
-      const { title, description, buttonText, buttonLink, items } = sectionData;
+      const { title, description, logo, buttonText, buttonLink, items } = sectionData;
 
       // Create section
       const section = await db.WebsiteProfileSection.create({
         websiteProfilePk,
         title,
         description,
+        logo: logo || '',
         buttonText,
         buttonLink
       });

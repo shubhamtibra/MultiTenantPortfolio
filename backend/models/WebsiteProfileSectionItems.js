@@ -28,10 +28,6 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.STRING,
                 allowNull: false,
             },
-            itemButtonLink: {
-                type: DataTypes.STRING,
-                allowNull: false,
-            },
         },
         {
             freezeTableName: true,

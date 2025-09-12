@@ -23,8 +23,9 @@ const PortfolioBuilder = ({ websiteProfileData, onComplete }) => {
     {
       title: '',
       description: '',
-      buttonText: 'Get Quote',
-      buttonLink: '#',
+      logo: '',
+      buttonText: '',
+      buttonLink: '',
       items: []
     }
   ]);
@@ -46,8 +47,7 @@ const PortfolioBuilder = ({ websiteProfileData, onComplete }) => {
     setSections(prev => [...prev, {
       title: '',
       description: '',
-      buttonText: 'Get Quote',
-      buttonLink: '#',
+      buttonText: '',
       items: []
     }]);
   };
@@ -61,7 +61,7 @@ const PortfolioBuilder = ({ websiteProfileData, onComplete }) => {
       index === sectionIndex 
         ? { 
             ...section, 
-            items: [...section.items, { title: '', description: '', buttonText: 'Learn More', buttonLink: '#' }] 
+            items: [...section.items, { title: '', description: '', buttonText: 'Learn More' }] 
           }
         : section
     ));
@@ -319,12 +319,32 @@ const PortfolioBuilder = ({ websiteProfileData, onComplete }) => {
                 </div>
 
                 <div className="form-group">
+                  <label>Service Logo (URL)</label>
+                  <input
+                    type="url"
+                    value={section.logo}
+                    onChange={(e) => handleSectionChange(sectionIndex, 'logo', e.target.value)}
+                    placeholder="https://example.com/service-icon.png"
+                  />
+                </div>
+
+                <div className="form-group">
                   <label>Button Text</label>
                   <input
                     type="text"
                     value={section.buttonText}
                     onChange={(e) => handleSectionChange(sectionIndex, 'buttonText', e.target.value)}
-                    placeholder="e.g., Get Quote"
+                    placeholder="e.g., Starting at $150"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Button Link</label>
+                  <input
+                    type="text"
+                    value={section.buttonLink}
+                    onChange={(e) => handleSectionChange(sectionIndex, 'buttonLink', e.target.value)}
+                    placeholder="e.g., #contact or tel:+1234567890"
                   />
                 </div>
 
