@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './PublicPortfolio.css';
+import { getApiBaseUrl, getMainAppUrl } from '../utils/domain';
 
-const PublicPortfolio = ({ domain }) => {
+const PublicPortfolio = ({ subdomain }) => {
   const [portfolioData, setPortfolioData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -11,7 +12,8 @@ const PublicPortfolio = ({ domain }) => {
     const fetchPortfolioData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:5000/api/portfolio/domain/${domain}`);
+        const apiBaseUrl = getApiBaseUrl();
+        const response = await fetch(`${apiBaseUrl}/api/portfolio/subdomain/${subdomain}`);
         const data = await response.json();
 
         if (data.success) {
@@ -26,10 +28,10 @@ const PublicPortfolio = ({ domain }) => {
       }
     };
 
-    if (domain) {
+    if (subdomain) {
       fetchPortfolioData();
     }
-  }, [domain]);
+  }, [subdomain]);
 
   const renderStars = (rating) => {
     return Array.from({ length: 5 }, (_, index) => (
@@ -57,8 +59,8 @@ const PublicPortfolio = ({ domain }) => {
           <h1>Portfolio Not Found</h1>
           <p>{error}</p>
           <div className="error-details">
-            <p>The domain <strong>{domain}</strong> doesn't have a portfolio associated with it.</p>
-            <a href="http://localhost:3000" className="create-portfolio-link">
+            <p>The subdomain <strong>{subdomain}</strong> doesn't have a portfolio associated with it.</p>
+            <a href={getMainAppUrl()} className="create-portfolio-link">
               Create Your Portfolio
             </a>
           </div>
@@ -73,7 +75,7 @@ const PublicPortfolio = ({ domain }) => {
         <div className="error-message">
           <h1>Portfolio Incomplete</h1>
           <p>This portfolio is still being set up.</p>
-          <a href="http://localhost:3000" className="create-portfolio-link">
+          <a href={getMainAppUrl()} className="create-portfolio-link">
             Create Your Portfolio
           </a>
         </div>
@@ -238,7 +240,7 @@ const PublicPortfolio = ({ domain }) => {
         <div className="footer-bottom">
           <p>&copy; 2024 {overview.companyName}. All rights reserved.</p>
           <p className="powered-by">
-            Powered by <a href="http://localhost:3000">Multi-Tenant Portfolio</a>
+            Powered by <a href={getMainAppUrl()}>Multi-Tenant Portfolio</a>
           </p>
         </div>
       </footer>

@@ -19,7 +19,7 @@ module.exports = (sequelize, DataTypes) => {
           key: 'pk',
         },
       },
-      domain: {
+      subdomain: {
         type: DataTypes.STRING,
         allowNull: false,
       },

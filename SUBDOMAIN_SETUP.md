@@ -2,7 +2,7 @@
 
 ## How Subdomain Access Works
 
-When someone visits a subdomain (like `mikesplumbing.localhost`), they will see the public portfolio for that domain automatically.
+When someone visits a subdomain (like `mikesplumbing.localhost.com`), they will see the public portfolio for that subdomain automatically. Users only need to enter the subdomain part (e.g., "mikesplumbing") and the system handles the rest.
 
 ## Testing Subdomain Functionality
 
@@ -16,9 +16,9 @@ sudo nano /etc/hosts
 
 Add these lines:
 ```
-127.0.0.1 mikesplumbing.localhost
-127.0.0.1 example.localhost
-127.0.0.1 testcompany.localhost
+127.0.0.1 mikesplumbing.localhost.com
+127.0.0.1 example.localhost.com  
+127.0.0.1 testcompany.localhost.com
 ```
 
 ### Step 2: Start both servers
@@ -40,30 +40,30 @@ Add these lines:
 1. Go to `http://localhost:3000`
 2. Register with:
    - Email: `test@example.com`
-   - Domain: `mikesplumbing.localhost`
+   - Subdomain: `mikesplumbing`
 3. Complete the portfolio builder with sample data
 4. Save and preview
 
 ### Step 4: Test subdomain access
 
 1. Open a new browser tab
-2. Visit `http://mikesplumbing.localhost:3000`
+2. Visit `http://mikesplumbing.localhost.com:3000`
 3. You should see the public portfolio automatically!
 
 ## How It Works
 
 ### Backend API
-- New endpoint: `GET /api/portfolio/domain/:domain`
-- Fetches complete portfolio data by domain name
+- New endpoint: `GET /api/portfolio/subdomain/:subdomain`
+- Fetches complete portfolio data by subdomain name
 - Returns overview, sections, and section items
 
 ### Frontend Detection
 - Automatically detects if user is on a subdomain
 - Shows `PublicPortfolio` component instead of landing page
-- Fetches and displays portfolio data for that domain
+- Fetches and displays portfolio data for that subdomain
 
-### Domain Mapping
-- `mikesplumbing.localhost` → looks up domain `mikesplumbing.localhost` in database
+### Subdomain Mapping
+- `mikesplumbing.localhost.com` → looks up subdomain `mikesplumbing` in database
 - Shows the complete portfolio with professional design
 - Mobile responsive and SEO friendly
 
@@ -89,9 +89,9 @@ For production, you would:
 ## Example URLs
 
 - Main app: `http://localhost:3000`
-- Mike's Plumbing: `http://mikesplumbing.localhost:3000`
-- Test Company: `http://testcompany.localhost:3000`
-- Any domain: `http://[domain].localhost:3000`
+- Mike's Plumbing: `http://mikesplumbing.localhost.com:3000`
+- Test Company: `http://testcompany.localhost.com:3000`
+- Any subdomain: `http://[subdomain].localhost.com:3000`
 
 ## Error Handling
 

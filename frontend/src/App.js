@@ -3,6 +3,7 @@ import './App.css';
 import PortfolioBuilder from './components/PortfolioBuilder';
 import PortfolioPreview from './components/PortfolioPreview';
 import PublicPortfolio from './components/PublicPortfolio';
+import { getCurrentDomain, getBaseDomain, getApiBaseUrl, getPortfolioUrl } from './utils/domain';
 
 function App() {
   const [currentView, setCurrentView] = useState('landing'); // 'landing', 'builder', 'preview', 'public'
@@ -12,7 +13,7 @@ function App() {
   
   const [formData, setFormData] = useState({
     email: '',
-    domain: ''
+    subdomain: ''
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
@@ -20,31 +21,22 @@ function App() {
   // Check for subdomain on component mount
   useEffect(() => {
     const detectSubdomain = () => {
-      const hostname = window.location.hostname;
+      const hostname = getCurrentDomain();
+      const baseDomain = getBaseDomain();
       
-      // Check if we're on a subdomain (not localhost or www)
-      if (hostname !== 'localhost' && hostname !== '127.0.0.1' && !hostname.startsWith('www.')) {
-        // Extract the domain part (everything before the first dot)
+      // Check if we're on a subdomain (not the base domain or www)
+      if (hostname !== baseDomain && hostname !== `www.${baseDomain}` && !hostname.startsWith('www.')) {
+        // Extract the subdomain part (everything before the base domain)
         const parts = hostname.split('.');
-        if (parts.length > 1) {
+        if (parts.length > 1 && hostname !== baseDomain) {
           const subdomain = parts[0];
-          // Convert subdomain to domain format (e.g., 'example' becomes 'example.localhost')
-          const domain = `${subdomain}.localhost`;
-          setSubdomainDomain(domain);
+          setSubdomainDomain(subdomain);
           setCurrentView('public');
           return;
         }
       }
       
-      // Check if hostname contains a domain pattern (for development testing)
-      // This allows testing with domains like 'mikesplumbing.localhost'
-      if (hostname.includes('.') && hostname !== 'localhost') {
-        setSubdomainDomain(hostname);
-        setCurrentView('public');
-        return;
-      }
-      
-      // Default to landing page
+      // Default to landing page for base domain
       setCurrentView('landing');
     };
 
@@ -65,7 +57,8 @@ function App() {
     setMessage({ text: '', type: '' });
 
     try {
-      const response = await fetch('http://localhost:5000/api/register', {
+      const apiBaseUrl = getApiBaseUrl();
+      const response = await fetch(`${apiBaseUrl}/api/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -76,17 +69,28 @@ function App() {
       const data = await response.json();
 
       if (data.success) {
-        setMessage({ 
-          text: 'Registration successful! Now let\'s build your portfolio.', 
-          type: 'success' 
-        });
         setWebsiteProfileData(data.data);
-        setFormData({ email: '', domain: '' });
+        setFormData({ email: '', subdomain: '' });
         
-        // Move to builder after a short delay
-        setTimeout(() => {
-          setCurrentView('builder');
-        }, 2000);
+        if (data.isExistingUser) {
+          setMessage({ 
+            text: data.message, 
+            type: 'success' 
+          });
+          
+          // For existing users, try to load their portfolio data
+          loadExistingPortfolio(data.data.websiteProfile.pk);
+        } else {
+          setMessage({ 
+            text: 'Registration successful! Now let\'s build your portfolio.', 
+            type: 'success' 
+          });
+          
+          // Move to builder after a short delay for new users
+          setTimeout(() => {
+            setCurrentView('builder');
+          }, 2000);
+        }
       } else {
         setMessage({ 
           text: data.error || 'Registration failed. Please try again.', 
@@ -103,6 +107,50 @@ function App() {
     }
   };
 
+  const loadExistingPortfolio = async (websiteProfilePk) => {
+    try {
+      const apiBaseUrl = getApiBaseUrl();
+      const response = await fetch(`${apiBaseUrl}/api/portfolio/${websiteProfilePk}`);
+      const data = await response.json();
+      
+      if (data.success && data.data.overview) {
+        // User has existing portfolio data - go to preview
+        setPortfolioData({
+          websiteProfile: data.data.websiteProfile,
+          overview: data.data.overview,
+          sections: data.data.sections || []
+        });
+        
+        setTimeout(() => {
+          setCurrentView('preview');
+          setMessage({ 
+            text: 'Welcome back! Here\'s your portfolio. You can edit or publish it.', 
+            type: 'success' 
+          });
+        }, 2000);
+      } else {
+        // User exists but no portfolio data - go to builder
+        setTimeout(() => {
+          setCurrentView('builder');
+          setMessage({ 
+            text: 'Welcome back! Let\'s complete your portfolio setup.', 
+            type: 'success' 
+          });
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Error loading existing portfolio:', error);
+      // Default to builder if there's an error
+      setTimeout(() => {
+        setCurrentView('builder');
+        setMessage({ 
+          text: 'Welcome back! Let\'s set up your portfolio.', 
+          type: 'success' 
+        });
+      }, 2000);
+    }
+  };
+
   const handlePortfolioComplete = (data) => {
     setPortfolioData(data);
     setCurrentView('preview');
@@ -113,7 +161,8 @@ function App() {
   };
 
   const handlePublish = () => {
-    alert(`🎉 Congratulations! Your portfolio is now live at https://${websiteProfileData.websiteProfile.domain}`);
+    const portfolioUrl = getPortfolioUrl(websiteProfileData.websiteProfile.subdomain);
+    alert(`🎉 Congratulations! Your portfolio is now live at ${portfolioUrl}`);
   };
 
   const handleBackToLanding = () => {
@@ -125,7 +174,7 @@ function App() {
 
   // Show public portfolio for subdomain access
   if (currentView === 'public' && subdomainDomain) {
-    return <PublicPortfolio domain={subdomainDomain} />;
+    return <PublicPortfolio subdomain={subdomainDomain} />;
   }
 
   if (currentView === 'builder' && websiteProfileData) {
@@ -169,6 +218,9 @@ function App() {
               Build a stunning multi-tenant portfolio website in minutes. 
               Perfect for professionals, freelancers, and agencies.
             </p>
+            <p className="login-note">
+              Already have an account? Just enter your email and domain to continue.
+            </p>
             
             <div className="registration-form-container">
               <form onSubmit={handleSubmit} className="registration-form">
@@ -186,16 +238,17 @@ function App() {
                 </div>
                 
                 <div className="form-group">
-                  <label htmlFor="domain">Domain Name</label>
+                  <label htmlFor="subdomain">Subdomain</label>
                   <input
                     type="text"
-                    id="domain"
-                    name="domain"
-                    value={formData.domain}
+                    id="subdomain"
+                    name="subdomain"
+                    value={formData.subdomain}
                     onChange={handleInputChange}
-                    placeholder="yourportfolio.com"
+                    placeholder="yourportfolio"
                     required
                   />
+                  <small className="field-help">Your portfolio will be available at: <strong>{getPortfolioUrl(formData.subdomain || 'yourportfolio')}</strong></small>
                 </div>
                 
                 <button 
@@ -203,7 +256,7 @@ function App() {
                   className="submit-button"
                   disabled={loading}
                 >
-                  {loading ? 'Creating Your Portfolio...' : 'Get Started'}
+                  {loading ? 'Processing...' : 'Get Started / Login'}
                 </button>
               </form>
               

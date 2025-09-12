@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './PortfolioPreview.css';
+import { getSubdomainUrl } from '../utils/domain';
 
 const PortfolioPreview = ({ portfolioData, onEdit, onPublish }) => {
   const { websiteProfile, overview, sections } = portfolioData;
@@ -25,7 +26,8 @@ const PortfolioPreview = ({ portfolioData, onEdit, onPublish }) => {
           <button className="btn-publish" onClick={() => {
             onPublish();
             // Redirect to subdomain
-            window.open(`http://${websiteProfile.domain}:3000`, '_blank');
+            const subdomainUrl = getSubdomainUrl(websiteProfile.subdomain);
+            window.open(subdomainUrl, '_blank');
           }}>
             Host Your Site
           </button>
@@ -138,7 +140,7 @@ const PortfolioPreview = ({ portfolioData, onEdit, onPublish }) => {
       <div className="preview-footer">
         <div className="domain-info">
           <strong>Your website will be available at:</strong>
-          <span className="domain-url">https://{websiteProfile.domain}</span>
+          <span className="domain-url">{getSubdomainUrl(websiteProfile.subdomain)}</span>
         </div>
       </div>
     </div>

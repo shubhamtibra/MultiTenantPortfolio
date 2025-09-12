@@ -32,10 +32,6 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.STRING,
                 allowNull: false,
             },
-            buttonLink: {
-                type: DataTypes.STRING,
-                allowNull: false,
-            },
         },
         {
             freezeTableName: true,

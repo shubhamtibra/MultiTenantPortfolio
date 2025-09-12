@@ -43,46 +43,98 @@ app.get('/api/health', (req, res) => {
 // API endpoint to create user and website profile
 app.post('/api/register', async (req, res) => {
   try {
-    const { email, domain } = req.body;
+    const { email, subdomain } = req.body;
 
     // Validate input
-    if (!email || !domain) {
+    if (!email || !subdomain) {
       return res.status(400).json({ 
-        error: 'Email and domain are required',
+        error: 'Email and subdomain are required',
         success: false 
       });
     }
 
     // Check if user already exists
     const existingUser = await db.User.findOne({ where: { email } });
+    
     if (existingUser) {
+      // User exists - check if they have a website profile
+      const existingProfile = await db.WebsiteProfile.findOne({ 
+        where: { userPk: existingUser.pk } 
+      });
+      
+      if (existingProfile) {
+        // User has existing profile - allow login
+        return res.status(200).json({
+          success: true,
+          message: 'Welcome back! You can now update your portfolio.',
+          isExistingUser: true,
+          data: {
+            user: {
+              pk: existingUser.pk,
+              email: existingUser.email
+            },
+            websiteProfile: {
+              pk: existingProfile.pk,
+              subdomain: existingProfile.subdomain
+            }
+          }
+        });
+      } else {
+        // User exists but no profile - check if subdomain is available
+        const existingSubdomain = await db.WebsiteProfile.findOne({ where: { subdomain } });
+        if (existingSubdomain) {
+          return res.status(409).json({ 
+            error: 'Subdomain is already taken',
+            success: false 
+          });
+        }
+        
+        // Create website profile for existing user
+        const websiteProfile = await db.WebsiteProfile.create({
+          userPk: existingUser.pk,
+          subdomain
+        });
+        
+        return res.status(201).json({
+          success: true,
+          message: 'Website profile created for existing user',
+          isExistingUser: true,
+          data: {
+            user: {
+              pk: existingUser.pk,
+              email: existingUser.email
+            },
+            websiteProfile: {
+              pk: websiteProfile.pk,
+              subdomain: websiteProfile.subdomain
+            }
+          }
+        });
+      }
+    }
+
+    // Check if subdomain is already taken for new users
+    const existingSubdomain = await db.WebsiteProfile.findOne({ where: { subdomain } });
+    if (existingSubdomain) {
       return res.status(409).json({ 
-        error: 'User with this email already exists',
+        error: 'Subdomain is already taken',
         success: false 
       });
     }
 
-    // Check if domain is already taken
-    const existingDomain = await db.WebsiteProfile.findOne({ where: { domain } });
-    if (existingDomain) {
-      return res.status(409).json({ 
-        error: 'Domain is already taken',
-        success: false 
-      });
-    }
-
-    // Create user
+    // Create new user
     const user = await db.User.create({ email });
 
     // Create website profile
     const websiteProfile = await db.WebsiteProfile.create({
       userPk: user.pk,
-      domain
+      subdomain
     });
 
     res.status(201).json({
       success: true,
       message: 'User and website profile created successfully',
+      isExistingUser: false,
       data: {
         user: {
           pk: user.pk,
@@ -90,7 +142,7 @@ app.post('/api/register', async (req, res) => {
         },
         websiteProfile: {
           pk: websiteProfile.pk,
-          domain: websiteProfile.domain
+          subdomain: websiteProfile.subdomain
         }
       }
     });
@@ -189,7 +241,7 @@ app.post('/api/portfolio/sections', async (req, res) => {
     const createdSections = [];
 
     for (const sectionData of sections) {
-      const { title, description, logo, buttonText, buttonLink, items } = sectionData;
+      const { title, description, logo, buttonText, items } = sectionData;
 
       // Create section
       const section = await db.WebsiteProfileSection.create({
@@ -197,8 +249,7 @@ app.post('/api/portfolio/sections', async (req, res) => {
         title,
         description,
         logo: logo || '',
-        buttonText,
-        buttonLink
+        buttonText
       });
 
       // Create section items
@@ -209,8 +260,7 @@ app.post('/api/portfolio/sections', async (req, res) => {
             websiteProfileSectionPk: section.pk,
             itemTitle: itemData.title,
             itemDescription: itemData.description,
-            itemButtonText: itemData.buttonText || 'Learn More',
-            itemButtonLink: itemData.buttonLink || '#'
+            itemButtonText: itemData.buttonText || 'Learn More'
           });
           sectionItems.push(item);
         }
@@ -293,14 +343,14 @@ app.get('/api/portfolio/:websiteProfilePk', async (req, res) => {
   }
 });
 
-// API endpoint to get portfolio by domain (for subdomain access)
-app.get('/api/portfolio/domain/:domain', async (req, res) => {
+// API endpoint to get portfolio by subdomain (for subdomain access)
+app.get('/api/portfolio/subdomain/:subdomain', async (req, res) => {
   try {
-    const { domain } = req.params;
+    const { subdomain } = req.params;
 
-    // Find website profile by domain
+    // Find website profile by subdomain
     const websiteProfile = await db.WebsiteProfile.findOne({
-      where: { domain },
+      where: { subdomain },
       include: [
         {
           model: db.User,
@@ -311,7 +361,7 @@ app.get('/api/portfolio/domain/:domain', async (req, res) => {
 
     if (!websiteProfile) {
       return res.status(404).json({ 
-        error: 'Portfolio not found for this domain',
+        error: 'Portfolio not found for this subdomain',
         success: false 
       });
     }
@@ -342,7 +392,7 @@ app.get('/api/portfolio/domain/:domain', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Portfolio fetch by domain error:', error);
+    console.error('Portfolio fetch by subdomain error:', error);
     res.status(500).json({ 
       error: 'Internal server error',
       success: false 

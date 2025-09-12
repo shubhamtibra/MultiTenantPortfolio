@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './PortfolioBuilder.css';
+import { getApiBaseUrl } from '../utils/domain';
 
 const PortfolioBuilder = ({ websiteProfileData, onComplete }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
+  const [isExistingUser, setIsExistingUser] = useState(false);
 
   // Overview form data
   const [overviewData, setOverviewData] = useState({
@@ -25,10 +27,50 @@ const PortfolioBuilder = ({ websiteProfileData, onComplete }) => {
       description: '',
       logo: '',
       buttonText: '',
-      buttonLink: '',
       items: []
     }
   ]);
+
+  // Load existing portfolio data if user is returning
+  useEffect(() => {
+    const loadExistingData = async () => {
+      if (websiteProfileData?.websiteProfile?.pk) {
+        try {
+          const apiBaseUrl = getApiBaseUrl();
+          const response = await fetch(`${apiBaseUrl}/api/portfolio/${websiteProfileData.websiteProfile.pk}`);
+          const data = await response.json();
+          
+          if (data.success) {
+            // Pre-populate overview data if it exists
+            if (data.data.overview) {
+              setOverviewData(data.data.overview);
+              setIsExistingUser(true);
+            }
+            
+            // Pre-populate sections data if it exists
+            if (data.data.sections && data.data.sections.length > 0) {
+              const formattedSections = data.data.sections.map(section => ({
+                title: section.title,
+                description: section.description,
+                logo: section.logo || '',
+                buttonText: section.buttonText,
+                items: section.WebsiteProfileSectionItems?.map(item => ({
+                  title: item.itemTitle,
+                  description: item.itemDescription,
+                  buttonText: item.itemButtonText
+                })) || []
+              }));
+              setSections(formattedSections);
+            }
+          }
+        } catch (error) {
+          console.error('Error loading existing portfolio data:', error);
+        }
+      }
+    };
+
+    loadExistingData();
+  }, [websiteProfileData]);
 
   const handleOverviewChange = (field, value) => {
     setOverviewData(prev => ({
@@ -96,7 +138,8 @@ const PortfolioBuilder = ({ websiteProfileData, onComplete }) => {
     setMessage({ text: '', type: '' });
 
     try {
-      const response = await fetch('http://localhost:5000/api/portfolio/overview', {
+      const apiBaseUrl = getApiBaseUrl();
+      const response = await fetch(`${apiBaseUrl}/api/portfolio/overview`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -127,7 +170,8 @@ const PortfolioBuilder = ({ websiteProfileData, onComplete }) => {
     setMessage({ text: '', type: '' });
 
     try {
-      const response = await fetch('http://localhost:5000/api/portfolio/sections', {
+      const apiBaseUrl = getApiBaseUrl();
+      const response = await fetch(`${apiBaseUrl}/api/portfolio/sections`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -161,7 +205,7 @@ const PortfolioBuilder = ({ websiteProfileData, onComplete }) => {
   return (
     <div className="portfolio-builder">
       <div className="builder-header">
-        <h1>Build Your Portfolio</h1>
+        <h1>{isExistingUser ? 'Update Your Portfolio' : 'Build Your Portfolio'}</h1>
         <div className="step-indicator">
           <div className={`step ${currentStep >= 1 ? 'active' : ''}`}>
             <span>1</span>
@@ -181,7 +225,7 @@ const PortfolioBuilder = ({ websiteProfileData, onComplete }) => {
       {currentStep === 1 && (
         <div className="overview-form">
           <h2>Company Overview</h2>
-          <p>Tell us about your business to create an engaging company profile.</p>
+          <p>{isExistingUser ? 'Update your business information below.' : 'Tell us about your business to create an engaging company profile.'}</p>
           
           <div className="form-grid">
             <div className="form-group">
@@ -338,15 +382,6 @@ const PortfolioBuilder = ({ websiteProfileData, onComplete }) => {
                   />
                 </div>
 
-                <div className="form-group">
-                  <label>Button Link</label>
-                  <input
-                    type="text"
-                    value={section.buttonLink}
-                    onChange={(e) => handleSectionChange(sectionIndex, 'buttonLink', e.target.value)}
-                    placeholder="e.g., #contact or tel:+1234567890"
-                  />
-                </div>
 
                 <div className="form-group full-width">
                   <label>Service Description *</label>
