@@ -42,7 +42,6 @@ export const getApiBaseUrl = () => {
 
   // Fallback to dynamic detection for backward compatibility
   const protocol = window.location.protocol;
-  const hostname = window.location.hostname;
 
   const baseDomain = getBaseDomain();
   const port = baseDomain === 'localhost' ? '5000' : (window.location.port ? `:${window.location.port}` : '');
@@ -60,8 +59,7 @@ export const getMainAppUrl = () => {
 
 export const getPortfolioUrl = (subdomain) => {
   const protocol = window.location.protocol;
-  const baseDomain = getBaseDomain();
   const port = window.location.port ? `:${window.location.port}` : '';
-
-  return `${protocol}//${subdomain}.${baseDomain}${port}`;
+  const hostname = window.location.hostname;
+  return `${protocol}//${subdomain}.${hostname}${port}`;
 };
