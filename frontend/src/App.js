@@ -163,6 +163,7 @@ function App() {
   const handlePublish = () => {
     const portfolioUrl = getPortfolioUrl(websiteProfileData.websiteProfile.subdomain);
     alert(`🎉 Congratulations! Your portfolio is now live at ${portfolioUrl}`);
+    window.open(portfolioUrl, '_blank');
   };
 
   const handleBackToLanding = () => {
