@@ -1,0 +1,22 @@
+{
+  "name": "multi-tenant-portfolio",
+  "version": "1.0.0",
+  "description": "A multi-tenant portfolio application with React frontend and Express backend",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:frontend": "cd frontend && npm start",
+    "dev:backend": "cd backend && npm run dev",
+    "start": "npm run start:backend",
+    "start:frontend": "cd frontend && npm start",
+    "start:backend": "cd backend && npm start",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+    "build": "cd frontend && npm run build"
+  },
+  "keywords": ["react", "express", "multi-tenant", "portfolio"],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
