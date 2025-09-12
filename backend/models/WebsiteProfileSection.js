@@ -24,6 +24,10 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.TEXT,
                 allowNull: false,
             },
+            logo: {
+                type: DataTypes.STRING,
+                allowNull: false,
+            },
             buttonText: {
                 type: DataTypes.STRING,
                 allowNull: false,

@@ -9,7 +9,25 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Allow localhost and subdomains
+    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      return callback(null, true);
+    }
+    
+    // Allow any subdomain pattern for development
+    if (origin.match(/^https?:\/\/[^.]+\.localhost(:\d+)?$/)) {
+      return callback(null, true);
+    }
+    
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -267,6 +285,63 @@ app.get('/api/portfolio/:websiteProfilePk', async (req, res) => {
 
   } catch (error) {
     console.error('Portfolio fetch error:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      success: false 
+    });
+  }
+});
+
+// API endpoint to get portfolio by domain (for subdomain access)
+app.get('/api/portfolio/domain/:domain', async (req, res) => {
+  try {
+    const { domain } = req.params;
+
+    // Find website profile by domain
+    const websiteProfile = await db.WebsiteProfile.findOne({
+      where: { domain },
+      include: [
+        {
+          model: db.User,
+          attributes: ['email']
+        }
+      ]
+    });
+
+    if (!websiteProfile) {
+      return res.status(404).json({ 
+        error: 'Portfolio not found for this domain',
+        success: false 
+      });
+    }
+
+    // Get overview
+    const overview = await db.WebsiteProfileOverview.findOne({
+      where: { websiteProfilePk: websiteProfile.pk }
+    });
+
+    // Get sections with items
+    const sections = await db.WebsiteProfileSection.findAll({
+      where: { websiteProfilePk: websiteProfile.pk },
+      include: [
+        {
+          model: db.WebsiteProfileSectionItems,
+          as: 'WebsiteProfileSectionItems'
+        }
+      ]
+    });
+
+    res.json({
+      success: true,
+      data: {
+        websiteProfile,
+        overview,
+        sections
+      }
+    });
+
+  } catch (error) {
+    console.error('Portfolio fetch by domain error:', error);
     res.status(500).json({ 
       error: 'Internal server error',
       success: false 

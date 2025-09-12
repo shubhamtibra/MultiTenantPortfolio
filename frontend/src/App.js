@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import PortfolioBuilder from './components/PortfolioBuilder';
 import PortfolioPreview from './components/PortfolioPreview';
+import PublicPortfolio from './components/PublicPortfolio';
 
 function App() {
-  const [currentView, setCurrentView] = useState('landing'); // 'landing', 'builder', 'preview'
+  const [currentView, setCurrentView] = useState('landing'); // 'landing', 'builder', 'preview', 'public'
   const [websiteProfileData, setWebsiteProfileData] = useState(null);
   const [portfolioData, setPortfolioData] = useState(null);
+  const [subdomainDomain, setSubdomainDomain] = useState(null);
   
   const [formData, setFormData] = useState({
     email: '',
@@ -14,6 +16,40 @@ function App() {
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
+
+  // Check for subdomain on component mount
+  useEffect(() => {
+    const detectSubdomain = () => {
+      const hostname = window.location.hostname;
+      
+      // Check if we're on a subdomain (not localhost or www)
+      if (hostname !== 'localhost' && hostname !== '127.0.0.1' && !hostname.startsWith('www.')) {
+        // Extract the domain part (everything before the first dot)
+        const parts = hostname.split('.');
+        if (parts.length > 1) {
+          const subdomain = parts[0];
+          // Convert subdomain to domain format (e.g., 'example' becomes 'example.localhost')
+          const domain = `${subdomain}.localhost`;
+          setSubdomainDomain(domain);
+          setCurrentView('public');
+          return;
+        }
+      }
+      
+      // Check if hostname contains a domain pattern (for development testing)
+      // This allows testing with domains like 'mikesplumbing.localhost'
+      if (hostname.includes('.') && hostname !== 'localhost') {
+        setSubdomainDomain(hostname);
+        setCurrentView('public');
+        return;
+      }
+      
+      // Default to landing page
+      setCurrentView('landing');
+    };
+
+    detectSubdomain();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -86,6 +122,11 @@ function App() {
     setPortfolioData(null);
     setMessage({ text: '', type: '' });
   };
+
+  // Show public portfolio for subdomain access
+  if (currentView === 'public' && subdomainDomain) {
+    return <PublicPortfolio domain={subdomainDomain} />;
+  }
 
   if (currentView === 'builder' && websiteProfileData) {
     return (
