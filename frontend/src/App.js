@@ -25,7 +25,7 @@ function App() {
       const baseDomain = getBaseDomain();
 
       // Check if we're on a subdomain (not the base domain or www)
-      if (hostname !== baseDomain && hostname !== `www.${baseDomain}` && !hostname.startsWith('www.')) {
+      if (hostname !== baseDomain && hostname !== `www.${baseDomain}` && !hostname.startsWith('www.') && !hostname.startsWith(process.env.REACT_HOST)) {
         // Extract the subdomain part (everything before the base domain)
         const parts = hostname.split('.');
         if (parts.length > 1 && hostname !== baseDomain) {
