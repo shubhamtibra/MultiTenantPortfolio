@@ -24,7 +24,7 @@ module.exports = {
         onUpdate: 'CASCADE',
         onDelete: 'RESTRICT'
       },
-      customBlurb: {
+      customDescription: {
         type: Sequelize.TEXT,
         allowNull: true
       },

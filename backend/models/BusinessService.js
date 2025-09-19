@@ -18,7 +18,7 @@ module.exports = (sequelize, DataTypes) => {
                     key: 'pk',
                 },
             },
-            customBlurb: {
+            customDescription: {
                 type: DataTypes.TEXT,
                 allowNull: true,
             },

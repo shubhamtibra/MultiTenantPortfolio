@@ -1,15 +1,41 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import ProgressivePortfolioBuilder from './ProgressivePortfolioBuilder';
 
 const Dashboard = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const [showPortfolioBuilder, setShowPortfolioBuilder] = useState(false);
 
     const handleLogout = () => {
         logout();
         navigate('/login');
     };
+
+    const handleCreatePortfolio = () => {
+        setShowPortfolioBuilder(true);
+    };
+
+    const handlePortfolioComplete = (portfolioData) => {
+        setShowPortfolioBuilder(false);
+        // You can add navigation to portfolio preview here
+        console.log('Portfolio created:', portfolioData);
+    };
+
+    const handleCancelPortfolio = () => {
+        setShowPortfolioBuilder(false);
+    };
+
+    // Show progressive portfolio builder if user clicked create portfolio
+    if (showPortfolioBuilder) {
+        return (
+            <ProgressivePortfolioBuilder
+                onComplete={handlePortfolioComplete}
+                onCancel={handleCancelPortfolio}
+            />
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -70,10 +96,13 @@ const Dashboard = () => {
 
                             {/* Action buttons */}
                             <div className="mt-8 space-x-4">
-                                <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-md font-medium">
+                                <button
+                                    onClick={handleCreatePortfolio}
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-md font-medium transition-colors"
+                                >
                                     Create Portfolio
                                 </button>
-                                <button className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-md font-medium">
+                                <button className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-md font-medium transition-colors">
                                     View Portfolios
                                 </button>
                             </div>

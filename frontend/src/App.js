@@ -116,7 +116,7 @@ const LandingPage = () => {
   const loadExistingPortfolio = async (websiteProfilePk) => {
     try {
       const apiBaseUrl = getApiBaseUrl();
-      const response = await fetch(`${apiBaseUrl}/api/portfolio/${websiteProfilePk}`);
+      const response = await fetch(`${apiBaseUrl}/api/portfolio/business/${websiteProfilePk}`);
       const data = await response.json();
 
       if (data.success && data.data.overview) {
@@ -238,7 +238,7 @@ const LandingPage = () => {
             </a>
             <a
               href="/signup"
-              className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors"
+              className="bg-white/20 hover:bg-white/30 text-white px-4 rounded-lg transition-colors"
             >
               Sign Up
             </a>
