@@ -31,7 +31,6 @@ const validateSequelizeInstance = async (sequelizeInstance) => {
     console.error('Sequelize unable to connect to the database:', err)
     exitFatally(1000)
   })
-  await sequelizeInstance.sync({ alter: true })
   console.log('Sequelize connection successfully established.')
 }
 

@@ -11,11 +11,11 @@ module.exports = (sequelize, DataTypes) => {
         primaryKey: true,
         defaultValue: DataTypes.UUIDV4,
       },
-      userPk: {
+      businessPk: {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
-          model: 'User',
+          model: 'Business',
           key: 'pk',
         },
       },
@@ -23,17 +23,41 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      customDomain: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      isActive: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
+        allowNull: false,
+      },
     },
     {
       freezeTableName: true,
       timestamps: true,
+      indexes: [
+        {
+          unique: true,
+          fields: ['subdomain'],
+          name: 'unique_subdomain'
+        },
+        {
+          unique: true,
+          fields: ['customDomain'],
+          name: 'unique_custom_domain',
+          where: {
+            customDomain: {
+              [sequelize.Sequelize.Op.ne]: null
+            }
+          }
+        }
+      ]
     }
   )
 
   WebsiteProfile.associate = (db) => {
-    db.WebsiteProfile.belongsTo(db.User, { foreignKey: 'userPk' })
-    db.WebsiteProfile.hasMany(db.WebsiteProfileSection, { foreignKey: 'websiteProfilePk' })
-    db.WebsiteProfile.hasOne(db.WebsiteProfileOverview, { foreignKey: 'websiteProfilePk' })
+    db.WebsiteProfile.belongsTo(db.Business, { foreignKey: 'businessPk' })
   }
 
   return WebsiteProfile
