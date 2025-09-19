@@ -7,9 +7,15 @@ require('dotenv').config();
 
 const loadDb = require('./models');
 const db = loadDb();
+const { router: authRoutes } = require('./routes/auth');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+// Add context middleware
+app.use((req, res, next) => {
+  req.ctx = { db };
+  next();
+});
 
 // Middleware
 app.use(cors({
@@ -71,6 +77,9 @@ const upload = multer({
 
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Authentication routes
+app.use('/api/auth', authRoutes);
 
 // Routes
 app.get('/', (req, res) => {

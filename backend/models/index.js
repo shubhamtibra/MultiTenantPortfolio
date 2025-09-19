@@ -7,7 +7,7 @@ var Sequelize = require('sequelize')
 var basename = path.basename(__filename)
 const withPagination = require('sequelize-cursor-pagination')
 
-require('dotenv').config()
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') })
 
 let sequelizeInstance = null
 
