@@ -101,21 +101,6 @@ const ProgressivePortfolioBuilder = ({ onComplete, onCancel, existingData = null
         }
     }, [isEditing, existingData, user?.email]);
 
-    // Load available services on component mount
-    // useEffect(() => {
-    //     loadAvailableServices();
-    // }, []);
-
-    const loadAvailableServices = async () => {
-        try {
-            const data = await publicApiClient.portfolio.getServices();
-            if (data.success) {
-                setAvailableServices(data.data);
-            }
-        } catch (error) {
-            console.error('Error loading services:', error);
-        }
-    };
 
     // Generate subdomain from business name
     const generateSubdomain = (businessName) => {
@@ -176,38 +161,101 @@ const ProgressivePortfolioBuilder = ({ onComplete, onCancel, existingData = null
         }));
     };
 
+    // Save current step data
+    const saveCurrentStep = async () => {
+        setLoading(true);
+        setMessage({ text: '', type: '' });
+
+        try {
+            let response;
+
+            switch (currentStep) {
+                case 1:
+                    response = await authenticatedApiClient.portfolio.saveBusiness(formData.business);
+                    break;
+                case 2:
+                    response = await authenticatedApiClient.portfolio.saveServices(formData.services);
+                    break;
+                case 3:
+                    response = await authenticatedApiClient.portfolio.saveServiceAreas(formData.serviceAreas);
+                    break;
+                case 4:
+                    response = await authenticatedApiClient.portfolio.saveTestimonials(formData.testimonials);
+                    break;
+                case 5:
+                    response = await authenticatedApiClient.portfolio.saveLicenses(formData.licenses);
+                    break;
+                default:
+                    return true; // No saving needed
+            }
+
+            if (response.success) {
+                setMessage({
+                    text: `Step ${currentStep} saved successfully!`,
+                    type: 'success'
+                });
+                return true;
+            } else {
+                setMessage({
+                    text: response.error || 'Failed to save step',
+                    type: 'error'
+                });
+                return false;
+            }
+        } catch (error) {
+            console.error('Error saving step:', error);
+            setMessage({
+                text: 'Failed to save step. Please try again.',
+                type: 'error'
+            });
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // Navigation handlers
-    const nextStep = () => {
-        if (currentStep < 5) {
+    const nextStep = async () => {
+        const saved = await saveCurrentStep();
+        if (saved && currentStep < 5) {
             setCurrentStep(currentStep + 1);
+            setMessage({ text: '', type: '' }); // Clear message when moving to next step
         }
     };
 
     const prevStep = () => {
         if (currentStep > 1) {
             setCurrentStep(currentStep - 1);
+            setMessage({ text: '', type: '' }); // Clear message when going back
         }
     };
 
     const skipStep = () => {
-        nextStep();
+        if (currentStep < 5) {
+            setCurrentStep(currentStep + 1);
+            setMessage({ text: '', type: '' }); // Clear message when skipping
+        }
     };
 
     // Save and finish
     const handleComplete = async () => {
+        // First save the current step (licenses)
+        const saved = await saveCurrentStep();
+        if (!saved) {
+            return; // Don't proceed if saving failed
+        }
+
         setLoading(true);
         setMessage({ text: '', type: '' });
 
         try {
-            const data = await authenticatedApiClient.portfolio.create({
-                userPk: user?.pk,
-                ...formData
-            });
+            // All steps are already saved individually, just get the portfolio data
+            const data = await authenticatedApiClient.portfolio.getMyPortfolio();
 
             if (data.success) {
                 const successMessage = isEditing
                     ? 'Portfolio updated successfully! Redirecting to your website...'
-                    : 'Portfolio created successfully! Redirecting to your website...';
+                    : 'Portfolio completed successfully! Redirecting to your website...';
 
                 setMessage({ text: successMessage, type: 'success' });
 
@@ -217,7 +265,7 @@ const ProgressivePortfolioBuilder = ({ onComplete, onCancel, existingData = null
                     if (subdomain) {
                         // Redirect to the subdomain URL
                         const portfolioUrl = getPortfolioUrl(subdomain);
-                        window.location.href = portfolioUrl;
+                        window.open(portfolioUrl, '_blank');
                     } else {
                         // Fallback to calling onComplete
                         onComplete(data.data);
@@ -225,8 +273,8 @@ const ProgressivePortfolioBuilder = ({ onComplete, onCancel, existingData = null
                 }, 2000);
             } else {
                 const errorMessage = isEditing
-                    ? data.error || 'Failed to update portfolio'
-                    : data.error || 'Failed to create portfolio';
+                    ? data.error || 'Failed to complete portfolio'
+                    : data.error || 'Failed to complete portfolio';
 
                 setMessage({ text: errorMessage, type: 'error' });
             }
@@ -283,7 +331,6 @@ const ProgressivePortfolioBuilder = ({ onComplete, onCancel, existingData = null
                     {currentStep === 2 && (
                         <ServicesStep
                             data={formData.services}
-                            availableServices={availableServices}
                             onAdd={(service) => addArrayItem('services', service)}
                             onRemove={(index) => removeArrayItem('services', index)}
                             onUpdate={(index, field, value) => updateArrayItem('services', index, field, value)}
@@ -332,13 +379,25 @@ const ProgressivePortfolioBuilder = ({ onComplete, onCancel, existingData = null
                     </div>
 
                     <div className="nav-right">
+                        <button
+                            className="btn btn-secondary"
+                            onClick={saveCurrentStep}
+                            disabled={loading}
+                        >
+                            {loading ? 'Saving...' : 'Save Draft'}
+                        </button>
+
                         <button className="btn btn-ghost" onClick={skipStep}>
                             Skip This Step
                         </button>
 
                         {currentStep < 5 ? (
-                            <button className="btn btn-primary" onClick={nextStep}>
-                                Next →
+                            <button
+                                className="btn btn-primary"
+                                onClick={nextStep}
+                                disabled={loading}
+                            >
+                                {loading ? 'Saving...' : 'Save & Next →'}
                             </button>
                         ) : (
                             <button
@@ -347,7 +406,7 @@ const ProgressivePortfolioBuilder = ({ onComplete, onCancel, existingData = null
                                 disabled={loading}
                             >
                                 {loading
-                                    ? (isEditing ? 'Updating Portfolio...' : 'Creating Portfolio...')
+                                    ? (isEditing ? 'Updating Portfolio...' : 'Completing Portfolio...')
                                     : (isEditing ? 'Update Portfolio' : 'Complete Portfolio')
                                 }
                             </button>
@@ -554,22 +613,7 @@ const BusinessInfoStep = ({ data, onUpdate, onBusinessNameChange }) => (
 );
 
 // Step 2: Services
-const ServicesStep = ({ data, availableServices, onAdd, onRemove, onUpdate }) => {
-    const [selectedServiceId, setSelectedServiceId] = useState('');
-
-    const addSelectedService = () => {
-        const service = availableServices.find(s => s.pk === selectedServiceId);
-        if (service && !data.some(s => s.servicePk === service.pk)) {
-            onAdd({
-                servicePk: service.pk,
-                name: service.name,
-                description: service.description,
-                category: service.category,
-                customDescription: ''
-            });
-            setSelectedServiceId('');
-        }
-    };
+const ServicesStep = ({ data, onAdd, onRemove, onUpdate }) => {
 
     const addCustomService = () => {
         onAdd({
@@ -588,30 +632,7 @@ const ServicesStep = ({ data, availableServices, onAdd, onRemove, onUpdate }) =>
 
             {/* Add service section */}
             <div className="add-service-section">
-                {/* <div className="service-selector">
-                    <select
-                        value={selectedServiceId}
-                        onChange={(e) => setSelectedServiceId(e.target.value)}
-                    >
-                        <option value="">Select a service...</option>
-                        {availableServices.map(service => (
-                            <option key={service.pk} value={service.pk}>
-                                {service.name} - {service.category}
-                            </option>
-                        ))}
-                    </select>
-                    <button
-                        className="btn btn-secondary"
-                        onClick={addSelectedService}
-                        disabled={!selectedServiceId}
-                    >
-                        Add Service
-                    </button>
-                </div>
 
-                <div className="or-divider">
-                    <span>or</span>
-                </div> */}
 
                 <button className="btn btn-outline" onClick={addCustomService}>
                     Add a Service
@@ -863,8 +884,8 @@ const LicensesStep = ({ data, onAdd, onRemove, onUpdate }) => {
 
             <div className="licenses">
                 {data.map((license, index) => (
-                    <div key={index} className="license-card">
-                        <div className="license-header">
+                    <div key={index} className="license-card flex flex-col gap-4">
+                        <div className="license-header flex flex-row justify-between items-center flex-grow">
                             <h4>License {index + 1}</h4>
                             <button
                                 className="btn-remove"
@@ -874,7 +895,7 @@ const LicensesStep = ({ data, onAdd, onRemove, onUpdate }) => {
                             </button>
                         </div>
 
-                        <div className="form-grid text-black">
+                        <div className="form-grid flex flex-col gap-4">
                             <div className="form-group">
                                 <label>License Number</label>
                                 <input

@@ -214,8 +214,10 @@
     border-radius: 12px;
     padding: 1.5rem;
     margin-bottom: 1.5rem;
-    background: #fafafa;
     transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
 }
 
 .service-card:hover,
@@ -231,7 +233,7 @@
 .testimonial-header,
 .license-header {
     display: flex;
-    justify-content: between;
+    justify-content: space-between;
     align-items: center;
     margin-bottom: 1rem;
 }
@@ -240,10 +242,55 @@
 .area-header h4,
 .testimonial-header h4,
 .license-header h4 {
-    color: #1f2937;
     font-size: 1.1rem;
     font-weight: 600;
     margin: 0;
+}
+
+/* License card specific styling */
+
+
+.license-card .form-group label {
+    color: white;
+    font-weight: 600;
+}
+
+.license-card .form-group input {
+    background: white !important;
+    color: #1f2937 !important;
+    border: 2px solid #e5e7eb;
+}
+
+.license-card .form-group input::placeholder {
+    color: #9ca3af !important;
+}
+
+/* License header specific positioning */
+.license-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: 1rem !important;
+    gap: 8rem;
+}
+
+.license-header h4 {
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    margin: 0 !important;
+    flex: 1;
+}
+
+.license-header .btn-remove {
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+/* Licenses container flexbox */
+.licenses {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
 }
 
 /* Services Step */

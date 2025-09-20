@@ -129,6 +129,27 @@ export const authenticatedApiClient = {
         getMyPortfolio: async () => {
             const response = await authenticatedAPI.get('/portfolio/my');
             return response.data;
+        },
+        // Step-by-step saving
+        saveBusiness: async (businessData) => {
+            const response = await authenticatedAPI.post('/portfolio/step/business', { business: businessData });
+            return response.data;
+        },
+        saveServices: async (servicesData) => {
+            const response = await authenticatedAPI.post('/portfolio/step/services', { services: servicesData });
+            return response.data;
+        },
+        saveServiceAreas: async (serviceAreasData) => {
+            const response = await authenticatedAPI.post('/portfolio/step/service-areas', { serviceAreas: serviceAreasData });
+            return response.data;
+        },
+        saveTestimonials: async (testimonialsData) => {
+            const response = await authenticatedAPI.post('/portfolio/step/testimonials', { testimonials: testimonialsData });
+            return response.data;
+        },
+        saveLicenses: async (licensesData) => {
+            const response = await authenticatedAPI.post('/portfolio/step/licenses', { licenses: licensesData });
+            return response.data;
         }
     },
 

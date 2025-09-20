@@ -166,6 +166,420 @@ router.put('/auth/change-password', async (req, res) => {
     }
 });
 
+// Step-by-step portfolio saving APIs
+
+// Save Step 1: Business Information
+router.post('/portfolio/step/business', async (req, res) => {
+    const transaction = await req.ctx.db.sequelize.transaction();
+
+    try {
+        const { db } = req.ctx;
+        const { business } = req.body;
+        const userId = req.user.userId;
+
+        // Find user's organization
+        const user = await db.User.findByPk(userId);
+        if (!user) {
+            await transaction.rollback();
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        // Create or update business
+        let businessRecord = await db.Business.findOne({
+            where: { orgPk: user.orgPk },
+            transaction
+        });
+
+        if (businessRecord) {
+            // Update existing business
+            await businessRecord.update({
+                legalName: business.legalName || business.publicName,
+                publicName: business.publicName,
+                tagline: business.tagline,
+                about: business.about,
+                email: business.email,
+                phone: business.phone,
+                website: business.website,
+                addressLine1: business.addressLine1,
+                addressLine2: business.addressLine2,
+                city: business.city,
+                region: business.region,
+                postalCode: business.postalCode,
+                country: business.country,
+                licensed: business.licensed,
+                insured: business.insured
+            }, { transaction });
+        } else {
+            // Create new business
+            businessRecord = await db.Business.create({
+                orgPk: user.orgPk,
+                legalName: business.legalName || business.publicName,
+                publicName: business.publicName,
+                tagline: business.tagline,
+                about: business.about,
+                email: business.email,
+                phone: business.phone,
+                website: business.website,
+                addressLine1: business.addressLine1,
+                addressLine2: business.addressLine2,
+                city: business.city,
+                region: business.region,
+                postalCode: business.postalCode,
+                country: business.country,
+                licensed: business.licensed,
+                insured: business.insured
+            }, { transaction });
+        }
+
+        // Create or update website profile
+        let websiteProfile = await db.WebsiteProfile.findOne({
+            where: { businessPk: businessRecord.pk },
+            transaction
+        });
+
+        if (websiteProfile) {
+            await websiteProfile.update({
+                subdomain: business.subdomain
+            }, { transaction });
+        } else {
+            websiteProfile = await db.WebsiteProfile.create({
+                businessPk: businessRecord.pk,
+                subdomain: business.subdomain,
+                isActive: true
+            }, { transaction });
+        }
+
+        await transaction.commit();
+
+        res.json({
+            success: true,
+            message: 'Business information saved successfully',
+            data: {
+                businessPk: businessRecord.pk,
+                business: businessRecord,
+                websiteProfile: websiteProfile
+            }
+        });
+
+    } catch (error) {
+        await transaction.rollback();
+        console.error('Error saving business information:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to save business information'
+        });
+    }
+});
+
+// Save Step 2: Services
+router.post('/portfolio/step/services', async (req, res) => {
+    const transaction = await req.ctx.db.sequelize.transaction();
+
+    try {
+        const { db } = req.ctx;
+        const { services } = req.body;
+        const userId = req.user.userId;
+
+        // Find user's business
+        const user = await db.User.findByPk(userId);
+        if (!user) {
+            await transaction.rollback();
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        const business = await db.Business.findOne({
+            where: { orgPk: user.orgPk },
+            transaction
+        });
+
+        if (!business) {
+            await transaction.rollback();
+            return res.status(404).json({
+                success: false,
+                error: 'Business not found. Please complete business information first.'
+            });
+        }
+
+        // Remove existing business services
+        await db.BusinessService.destroy({
+            where: { businessPk: business.pk },
+            transaction
+        });
+
+        // Add new business services
+        if (services && services.length > 0) {
+            for (const service of services) {
+                let servicePk = service.servicePk;
+
+                // If it's a custom service, create it first
+                if (!servicePk && service.name) {
+                    const newService = await db.Service.create({
+                        name: service.name,
+                        description: service.customDescription || service.description,
+                        category: service.category || 'Custom',
+                        isActive: true
+                    }, { transaction });
+                    servicePk = newService.pk;
+                }
+
+                if (servicePk) {
+                    await db.BusinessService.create({
+                        businessPk: business.pk,
+                        servicePk: servicePk,
+                        customDescription: service.customDescription
+                    }, { transaction });
+                }
+            }
+        }
+
+        await transaction.commit();
+
+        res.json({
+            success: true,
+            message: 'Services saved successfully',
+            data: {
+                businessPk: business.pk,
+                servicesCount: services ? services.length : 0
+            }
+        });
+
+    } catch (error) {
+        await transaction.rollback();
+        console.error('Error saving services:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to save services'
+        });
+    }
+});
+
+// Save Step 3: Service Areas
+router.post('/portfolio/step/service-areas', async (req, res) => {
+    const transaction = await req.ctx.db.sequelize.transaction();
+
+    try {
+        const { db } = req.ctx;
+        const { serviceAreas } = req.body;
+        const userId = req.user.userId;
+
+        // Find user's business
+        const user = await db.User.findByPk(userId);
+        if (!user) {
+            await transaction.rollback();
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        const business = await db.Business.findOne({
+            where: { orgPk: user.orgPk },
+            transaction
+        });
+
+        if (!business) {
+            await transaction.rollback();
+            return res.status(404).json({
+                success: false,
+                error: 'Business not found. Please complete business information first.'
+            });
+        }
+
+        // Remove existing service areas
+        await db.ServiceArea.destroy({
+            where: { businessPk: business.pk },
+            transaction
+        });
+
+        // Add new service areas
+        if (serviceAreas && serviceAreas.length > 0) {
+            for (const area of serviceAreas) {
+                if (area.label && area.value) {
+                    await db.ServiceArea.create({
+                        businessPk: business.pk,
+                        label: area.label,
+                        coverageType: area.coverageType,
+                        value: area.value
+                    }, { transaction });
+                }
+            }
+        }
+
+        await transaction.commit();
+
+        res.json({
+            success: true,
+            message: 'Service areas saved successfully',
+            data: {
+                businessPk: business.pk,
+                serviceAreasCount: serviceAreas ? serviceAreas.length : 0
+            }
+        });
+
+    } catch (error) {
+        await transaction.rollback();
+        console.error('Error saving service areas:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to save service areas'
+        });
+    }
+});
+
+// Save Step 4: Testimonials
+router.post('/portfolio/step/testimonials', async (req, res) => {
+    const transaction = await req.ctx.db.sequelize.transaction();
+
+    try {
+        const { db } = req.ctx;
+        const { testimonials } = req.body;
+        const userId = req.user.userId;
+
+        // Find user's business
+        const user = await db.User.findByPk(userId);
+        if (!user) {
+            await transaction.rollback();
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        const business = await db.Business.findOne({
+            where: { orgPk: user.orgPk },
+            transaction
+        });
+
+        if (!business) {
+            await transaction.rollback();
+            return res.status(404).json({
+                success: false,
+                error: 'Business not found. Please complete business information first.'
+            });
+        }
+
+        // Remove existing testimonials
+        await db.Testimonial.destroy({
+            where: { businessPk: business.pk },
+            transaction
+        });
+
+        // Add new testimonials
+        if (testimonials && testimonials.length > 0) {
+            for (const testimonial of testimonials) {
+                if (testimonial.quote) {
+                    await db.Testimonial.create({
+                        businessPk: business.pk,
+                        authorName: testimonial.authorName,
+                        quote: testimonial.quote,
+                        rating: testimonial.rating,
+                        sortOrder: testimonial.sortOrder || 100
+                    }, { transaction });
+                }
+            }
+        }
+
+        await transaction.commit();
+
+        res.json({
+            success: true,
+            message: 'Testimonials saved successfully',
+            data: {
+                businessPk: business.pk,
+                testimonialsCount: testimonials ? testimonials.length : 0
+            }
+        });
+
+    } catch (error) {
+        await transaction.rollback();
+        console.error('Error saving testimonials:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to save testimonials'
+        });
+    }
+});
+
+// Save Step 5: Licenses
+router.post('/portfolio/step/licenses', async (req, res) => {
+    const transaction = await req.ctx.db.sequelize.transaction();
+
+    try {
+        const { db } = req.ctx;
+        const { licenses } = req.body;
+        const userId = req.user.userId;
+
+        // Find user's business
+        const user = await db.User.findByPk(userId);
+        if (!user) {
+            await transaction.rollback();
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        const business = await db.Business.findOne({
+            where: { orgPk: user.orgPk },
+            transaction
+        });
+
+        if (!business) {
+            await transaction.rollback();
+            return res.status(404).json({
+                success: false,
+                error: 'Business not found. Please complete business information first.'
+            });
+        }
+
+        // Remove existing licenses
+        await db.License.destroy({
+            where: { businessPk: business.pk },
+            transaction
+        });
+
+        // Add new licenses
+        if (licenses && licenses.length > 0) {
+            for (const license of licenses) {
+                if (license.licenseNo) {
+                    await db.License.create({
+                        businessPk: business.pk,
+                        licenseNo: license.licenseNo,
+                        authority: license.authority,
+                        state: license.state,
+                        expiresOn: license.expiresOn
+                    }, { transaction });
+                }
+            }
+        }
+
+        await transaction.commit();
+
+        res.json({
+            success: true,
+            message: 'Licenses saved successfully',
+            data: {
+                businessPk: business.pk,
+                licensesCount: licenses ? licenses.length : 0
+            }
+        });
+
+    } catch (error) {
+        await transaction.rollback();
+        console.error('Error saving licenses:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to save licenses'
+        });
+    }
+});
+
 // Complete portfolio creation (authenticated - user can only create for their org)
 router.post('/portfolio/complete', async (req, res) => {
     const transaction = await req.ctx.db.sequelize.transaction();
