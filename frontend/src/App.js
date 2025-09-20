@@ -160,7 +160,7 @@ function App() {
         <SubdomainHandler>
           <Routes>
             {/* Public routes */}
-            <Route path="/" element={<LandingPage />} />
+            <Route path="/" element={<AuthenticatedRedirect><LandingPage /></AuthenticatedRedirect>} />
 
             {/* Authentication routes with redirect logic */}
             <Route
