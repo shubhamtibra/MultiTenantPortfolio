@@ -36,6 +36,10 @@ module.exports = (sequelize, DataTypes) => {
                 defaultValue: 100,
                 allowNull: false,
             },
+            logoUrl: {
+                type: DataTypes.STRING,
+                allowNull: true,
+            },
         },
         {
             freezeTableName: true,

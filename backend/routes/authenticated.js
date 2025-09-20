@@ -210,7 +210,8 @@ router.post('/portfolio/step/business', async (req, res) => {
                 postalCode: business.postalCode,
                 country: business.country,
                 licensed: business.licensed,
-                insured: business.insured
+                insured: business.insured,
+                logoUrl: business.logoUrl
             }, { transaction });
         } else {
             // Create new business
@@ -230,7 +231,8 @@ router.post('/portfolio/step/business', async (req, res) => {
                 postalCode: business.postalCode,
                 country: business.country,
                 licensed: business.licensed,
-                insured: business.insured
+                insured: business.insured,
+                logoUrl: business.logoUrl
             }, { transaction });
         }
 
@@ -332,7 +334,8 @@ router.post('/portfolio/step/services', async (req, res) => {
                     await db.BusinessService.create({
                         businessPk: business.pk,
                         servicePk: servicePk,
-                        customDescription: service.customDescription
+                        customDescription: service.customDescription,
+                        logoUrl: service.logoUrl
                     }, { transaction });
                 }
             }
@@ -479,7 +482,8 @@ router.post('/portfolio/step/testimonials', async (req, res) => {
                         authorName: testimonial.authorName,
                         quote: testimonial.quote,
                         rating: testimonial.rating,
-                        sortOrder: testimonial.sortOrder || 100
+                        sortOrder: testimonial.sortOrder || 100,
+                        logoUrl: testimonial.logoUrl
                     }, { transaction });
                 }
             }
@@ -637,7 +641,8 @@ router.post('/portfolio/complete', async (req, res) => {
                 postalCode: business.postalCode,
                 country: business.country,
                 licensed: business.licensed,
-                insured: business.insured
+                insured: business.insured,
+                logoUrl: business.logoUrl
             }, { transaction });
         } else {
             // Create new business
@@ -657,7 +662,8 @@ router.post('/portfolio/complete', async (req, res) => {
                 postalCode: business.postalCode,
                 country: business.country,
                 licensed: business.licensed,
-                insured: business.insured
+                insured: business.insured,
+                logoUrl: business.logoUrl
             }, { transaction });
         }
 
@@ -708,7 +714,8 @@ router.post('/portfolio/complete', async (req, res) => {
                     await db.BusinessService.create({
                         businessPk: businessRecord.pk,
                         servicePk: servicePk,
-                        customDescription: service.customDescription
+                        customDescription: service.customDescription,
+                        logoUrl: service.logoUrl
                     }, { transaction });
                 }
             }
@@ -751,7 +758,8 @@ router.post('/portfolio/complete', async (req, res) => {
                         authorName: testimonial.authorName,
                         quote: testimonial.quote,
                         rating: testimonial.rating,
-                        sortOrder: testimonial.sortOrder || 100
+                        sortOrder: testimonial.sortOrder || 100,
+                        logoUrl: testimonial.logoUrl
                     }, { transaction });
                 }
             }
@@ -962,7 +970,7 @@ async function getCompletePortfolio(db, businessPk) {
                 model: db.Service,
                 through: {
                     model: db.BusinessService,
-                    attributes: ['customDescription']
+                    attributes: ['customDescription', 'logoUrl']
                 }
             },
             {
@@ -993,14 +1001,14 @@ async function getCompletePortfolio(db, businessPk) {
         companyRating: business.Testimonials?.length > 0
             ? Math.round(business.Testimonials.reduce((sum, t) => sum + (t.rating || 5), 0) / business.Testimonials.length)
             : 5,
-        companyLogo: null
+        companyLogo: business.logoUrl || null
     };
 
     // Transform services to sections format with more details
     const sections = business.Services?.map(service => ({
         title: service.name,
         description: service.BusinessService?.customDescription || service.description,
-        logo: null,
+        logo: service.BusinessService?.logoUrl || null,
         buttonText: "Get Quote",
         category: service.category,
         WebsiteProfileSectionItems: []
@@ -1033,7 +1041,8 @@ async function getCompletePortfolio(db, businessPk) {
             WebsiteProfileSectionItems: business.Testimonials.map(testimonial => ({
                 itemTitle: testimonial.authorName || "Satisfied Customer",
                 itemDescription: `"${testimonial.quote}" ${testimonial.rating ? `- ${testimonial.rating}/5 stars` : ''}`,
-                itemButtonText: "Leave Review"
+                itemButtonText: "Leave Review",
+                logoUrl: testimonial.logoUrl || null
             }))
         });
     }

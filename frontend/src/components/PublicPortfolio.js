@@ -269,7 +269,13 @@ const PublicPortfolio = ({ subdomain }) => {
                     <p className="quote-text">{testimonial.itemDescription}</p>
                   </div>
                   <div className="testimonial-author">
-                    <div className="author-avatar">👤</div>
+                    <div className="author-avatar">
+                      {testimonial.logoUrl ? (
+                        <img src={testimonial.logoUrl} alt={testimonial.itemTitle} className="author-logo" />
+                      ) : (
+                        <span>👤</span>
+                      )}
+                    </div>
                     <div className="author-info">
                       <h4 className="author-name">{testimonial.itemTitle}</h4>
                       <div className="author-rating">

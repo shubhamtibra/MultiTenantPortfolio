@@ -31,7 +31,8 @@ const ProgressivePortfolioBuilder = ({ onComplete, onCancel, existingData = null
             yearsInBusiness: '',
             licensed: true,
             insured: true,
-            subdomain: ''
+            subdomain: '',
+            logoUrl: ''
         },
         // Step 2: Services
         services: [],
@@ -69,14 +70,16 @@ const ProgressivePortfolioBuilder = ({ onComplete, onCancel, existingData = null
                     yearsInBusiness: existingData.business?.yearsInBusiness || '',
                     licensed: existingData.business?.licensed ?? true,
                     insured: existingData.business?.insured ?? true,
-                    subdomain: existingData.websiteProfile?.subdomain || ''
+                    subdomain: existingData.websiteProfile?.subdomain || '',
+                    logoUrl: existingData.business?.logoUrl || ''
                 },
                 services: (existingData.services || []).map(service => ({
                     servicePk: service.pk,
                     name: service.name,
                     description: service.description,
                     category: service.category,
-                    customDescription: service.BusinessService?.customDescription || service.customDescription || ''
+                    customDescription: service.BusinessService?.customDescription || service.customDescription || '',
+                    logoUrl: service.BusinessService?.logoUrl || ''
                 })),
                 serviceAreas: (existingData.serviceAreas || []).map(area => ({
                     label: area.label,
@@ -87,7 +90,8 @@ const ProgressivePortfolioBuilder = ({ onComplete, onCancel, existingData = null
                     authorName: testimonial.authorName,
                     quote: testimonial.quote,
                     rating: testimonial.rating,
-                    sortOrder: testimonial.sortOrder
+                    sortOrder: testimonial.sortOrder,
+                    logoUrl: testimonial.logoUrl || ''
                 })),
                 licenses: (existingData.licenses || []).map(license => ({
                     licenseNo: license.licenseNo,
@@ -453,6 +457,16 @@ const BusinessInfoStep = ({ data, onUpdate, onBusinessNameChange }) => (
                 />
             </div>
 
+            <div className="form-group">
+                <label>Business Logo (Optional)</label>
+                <ImageUpload
+                    label="Business Logo"
+                    currentImage={data.logoUrl}
+                    onImageChange={(url) => onUpdate('logoUrl', url)}
+                    placeholder="Upload your business logo"
+                />
+            </div>
+
             <div className="form-group full-width">
                 <label>Tagline</label>
                 <input
@@ -621,7 +635,8 @@ const ServicesStep = ({ data, onAdd, onRemove, onUpdate }) => {
             name: '',
             description: '',
             category: '',
-            customDescription: ''
+            customDescription: '',
+            logoUrl: ''
         });
     };
 
@@ -671,6 +686,16 @@ const ServicesStep = ({ data, onAdd, onRemove, onUpdate }) => {
                                     value={service.category}
                                     onChange={(e) => onUpdate(index, 'category', e.target.value)}
                                     placeholder="e.g., Plumbing"
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Service Logo (Optional)</label>
+                                <ImageUpload
+                                    label="Service Logo"
+                                    currentImage={service.logoUrl}
+                                    onImageChange={(url) => onUpdate(index, 'logoUrl', url)}
+                                    placeholder="Upload service logo"
                                 />
                             </div>
 
@@ -788,7 +813,8 @@ const TestimonialsStep = ({ data, onAdd, onRemove, onUpdate }) => {
             authorName: '',
             quote: '',
             rating: 5,
-            sortOrder: 100
+            sortOrder: 100,
+            logoUrl: ''
         });
     };
 
@@ -837,6 +863,16 @@ const TestimonialsStep = ({ data, onAdd, onRemove, onUpdate }) => {
                                     <option value={2}>2 Stars</option>
                                     <option value={1}>1 Star</option>
                                 </select>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Customer/Company Logo (Optional)</label>
+                                <ImageUpload
+                                    label="Customer Logo"
+                                    currentImage={testimonial.logoUrl}
+                                    onImageChange={(url) => onUpdate(index, 'logoUrl', url)}
+                                    placeholder="Upload customer or company logo"
+                                />
                             </div>
 
                             <div className="form-group full-width">
