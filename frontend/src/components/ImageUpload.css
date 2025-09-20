@@ -1,27 +1,29 @@
 /* Image Upload Container */
 .image-upload-container {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
 }
 
 .image-upload-label {
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     font-weight: 500;
     color: #333;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 /* Upload Area */
 .image-upload-area {
     border: 2px dashed #e1e5e9;
-    border-radius: 8px;
-    padding: 20px;
+    border-radius: 6px;
+    padding: 12px;
     text-align: center;
     cursor: pointer;
     transition: all 0.3s ease;
     background: #fafafa;
     position: relative;
-    min-height: 120px;
+    min-height: 80px;
+    max-width: 200px;
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -39,9 +41,10 @@
 }
 
 .image-upload-area.has-image {
-    padding: 0;
+    padding: 8px;
     border: 1px solid #e1e5e9;
     background: transparent;
+    min-height: auto;
 }
 
 /* Hidden File Input */
@@ -54,24 +57,30 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 4px;
     color: #666;
+    max-width: 100%;
+    text-align: center;
 }
 
 .upload-icon {
-    font-size: 2rem;
+    font-size: 1.5rem;
     color: #999;
 }
 
 .upload-text {
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 500;
     color: #333;
+    line-height: 1.2;
+    word-wrap: break-word;
 }
 
 .upload-hint {
-    font-size: 12px;
+    font-size: 11px;
     color: #999;
+    line-height: 1.2;
+    word-wrap: break-word;
 }
 
 /* Upload Progress */
@@ -79,15 +88,15 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     color: #4a90e2;
 }
 
 .spinner {
-    width: 24px;
-    height: 24px;
-    border: 3px solid #f3f3f3;
-    border-top: 3px solid #4a90e2;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #4a90e2;
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -105,17 +114,21 @@
 /* Image Preview */
 .image-preview {
     position: relative;
-    width: 100%;
-    height: 200px;
-    border-radius: 8px;
+    width: 100px;
+    height: 70px;
+    border-radius: 6px;
     overflow: hidden;
+    margin: 0 auto;
+    border: 1px solid #e1e5e9;
+    background: white;
 }
 
 .preview-image {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     display: block;
+    padding: 6px;
 }
 
 .image-overlay {
@@ -124,12 +137,13 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.3);
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: flex-start;
+    justify-content: flex-end;
     opacity: 0;
     transition: opacity 0.3s ease;
+    padding: 4px;
 }
 
 .image-preview:hover .image-overlay {
@@ -140,9 +154,9 @@
     background: rgba(255, 255, 255, 0.9);
     border: none;
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    font-size: 18px;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
     font-weight: bold;
     color: #ff4757;
     cursor: pointer;
@@ -165,71 +179,71 @@
 
 /* Error Message */
 .upload-error {
-    margin-top: 8px;
+    margin-top: 6px;
     color: #ff4757;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 500;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
     .image-upload-area {
-        min-height: 100px;
-        padding: 16px;
+        min-height: 70px;
+        padding: 10px;
+        max-width: 160px;
     }
 
     .image-preview {
-        height: 150px;
+        width: 80px;
+        height: 60px;
     }
 
     .upload-icon {
-        font-size: 1.5rem;
+        font-size: 1.2rem;
     }
 
     .upload-text {
-        font-size: 14px;
+        font-size: 12px;
     }
 
     .upload-hint {
-        font-size: 11px;
+        font-size: 10px;
     }
 }
 
 /* Small Image Preview for Forms */
 .image-upload-container.small .image-preview {
-    height: 80px;
-    width: 80px;
+    height: 60px;
+    width: 60px;
     border-radius: 4px;
     margin: 0 auto;
 }
 
 .image-upload-container.small .image-upload-area {
-    min-height: 80px;
-    padding: 12px;
+    min-height: 60px;
+    padding: 8px;
+    max-width: 120px;
 }
 
 .image-upload-container.small .upload-icon {
-    font-size: 1.2rem;
+    font-size: 1rem;
 }
 
 .image-upload-container.small .upload-text {
-    font-size: 12px;
+    font-size: 11px;
 }
 
 .image-upload-container.small .upload-hint {
-    font-size: 10px;
+    font-size: 9px;
 }
 
-/* Logo Upload Specific Styling */
+/* Logo Upload Specific Styling - Now redundant since default is logo-sized */
 .logo-upload .image-preview {
-    height: 120px;
-    background: white;
-    border: 1px solid #e1e5e9;
+    /* Default size is already appropriate for logos */
 }
 
 .logo-upload .preview-image {
-    object-fit: contain;
-    padding: 10px;
+    /* Default settings already use object-fit: contain with padding */
 }
 
 .logo-upload .image-upload-area {

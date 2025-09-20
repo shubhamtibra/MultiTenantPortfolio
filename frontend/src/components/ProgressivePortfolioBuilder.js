@@ -145,7 +145,7 @@ const ProgressivePortfolioBuilder = ({ onComplete, onCancel, existingData = null
     const addArrayItem = (section, item) => {
         setFormData(prev => ({
             ...prev,
-            [section]: [...prev[section], item]
+            [section]: [item, ...prev[section]]
         }));
     };
 

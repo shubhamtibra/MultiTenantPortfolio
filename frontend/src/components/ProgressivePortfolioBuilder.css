@@ -131,6 +131,46 @@
     margin-bottom: 2rem;
 }
 
+/* Service form grid - more compact layout */
+.service-card .form-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* Service card form group adjustments */
+.service-card .form-group {
+    margin-bottom: 0.5rem;
+}
+
+.service-card .form-group label {
+    margin-bottom: 0.375rem;
+    font-size: 0.85rem;
+}
+
+.service-card .form-group input,
+.service-card .form-group textarea {
+    padding: 0.625rem;
+    font-size: 0.9rem;
+}
+
+.service-card .form-group textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+/* Service logo section - make it more compact */
+.service-card .form-group:has(.image-upload-component) {
+    grid-row: span 2;
+    align-self: start;
+}
+
+/* Full width description field in service cards */
+.service-card .form-group.full-width {
+    grid-column: 1 / -1;
+    margin-top: 0.5rem;
+}
+
 .form-group {
     display: flex;
     flex-direction: column;
@@ -220,6 +260,13 @@
     gap: 1.5rem;
 }
 
+/* Service card specific optimizations */
+.service-card {
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    gap: 1rem;
+}
+
 .service-card:hover,
 .area-card:hover,
 .testimonial-card:hover,
@@ -245,6 +292,18 @@
     font-size: 1.1rem;
     font-weight: 600;
     margin: 0;
+}
+
+/* Service header specific styling */
+.service-card .service-header {
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.service-card .service-header h4 {
+    font-size: 1rem;
+    color: #4f46e5;
 }
 
 /* License card specific styling */
@@ -298,9 +357,9 @@
     background: #f9fafb;
     border: 2px dashed #d1d5db;
     border-radius: 12px;
-    padding: 2rem;
+    padding: 1.5rem;
     text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
 }
 
 .service-selector {
@@ -342,8 +401,28 @@
 }
 
 .selected-services {
-    max-height: 400px;
+    max-height: 600px;
     overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+/* Custom scrollbar for selected services */
+.selected-services::-webkit-scrollbar {
+    width: 6px;
+}
+
+.selected-services::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.selected-services::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.selected-services::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
 }
 
 /* Empty State */
@@ -531,5 +610,19 @@
     .nav-right {
         width: 100%;
         justify-content: center;
+    }
+
+    /* Service cards on mobile */
+    .service-card .form-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .service-card .form-group:has(.image-upload-component) {
+        grid-row: auto;
+    }
+
+    .selected-services {
+        max-height: 500px;
     }
 }
