@@ -138,20 +138,7 @@ const PublicPortfolio = ({ subdomain }) => {
         <div className="hero-content">
           <h1 className="hero-title">{overview.companyTitle}</h1>
           <p className="hero-description">{overview.companyDescription}</p>
-          <div className="hero-stats">
-            <div className="stat-item">
-              <div className="stat-number">{overview.companyRating}</div>
-              <div className="stat-label">Google Rating</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-number">100+</div>
-              <div className="stat-label">Happy Customers</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-number">24/7</div>
-              <div className="stat-label">Support</div>
-            </div>
-          </div>
+
           <div className="hero-actions">
             <a href={`tel:${overview.companyPhone}`} className="cta-button primary">
               📞 Call Now
