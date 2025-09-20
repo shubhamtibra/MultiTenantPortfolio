@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import PortfolioBuilder from './components/PortfolioBuilder';
-import PortfolioPreview from './components/PortfolioPreview';
 import PublicPortfolio from './components/PublicPortfolio';
 import Login from './components/Login';
 import Signup from './components/Signup';
@@ -12,213 +10,6 @@ import { getCurrentDomain, getBaseDomain, getApiBaseUrl, getPortfolioUrl } from 
 
 // Landing page component
 const LandingPage = () => {
-  const [currentView, setCurrentView] = useState('landing'); // 'landing', 'signup', 'login', 'builder', 'preview', 'public'
-  const [websiteProfileData, setWebsiteProfileData] = useState(null);
-  const [portfolioData, setPortfolioData] = useState(null);
-  const [subdomainDomain, setSubdomainDomain] = useState(null);
-
-  const [formData, setFormData] = useState({
-    email: '',
-    subdomain: ''
-  });
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState({ text: '', type: '' });
-
-  // Check for subdomain on component mount
-  useEffect(() => {
-    const detectSubdomain = () => {
-      const hostname = getCurrentDomain();
-      const baseDomain = getBaseDomain();
-
-      // Check if we're on a subdomain (not the base domain or www)
-      if (hostname !== baseDomain && hostname !== `www.${baseDomain}` && !hostname.startsWith('www.') && hostname !== process.env.REACT_APP_HOST) {
-        // Extract the subdomain part (everything before the base domain)
-        const parts = hostname.split('.');
-        if (parts.length > 1 && hostname !== baseDomain) {
-          const subdomain = parts[0];
-          setSubdomainDomain(subdomain);
-          setCurrentView('public');
-          return;
-        }
-      }
-
-      // Default to landing page for base domain
-      setCurrentView('landing');
-    };
-
-    detectSubdomain();
-  }, []);
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage({ text: '', type: '' });
-
-    try {
-      const apiBaseUrl = getApiBaseUrl();
-      const response = await fetch(`${apiBaseUrl}/api/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        setWebsiteProfileData(data.data);
-        setFormData({ email: '', subdomain: '' });
-
-        if (data.isExistingUser) {
-          setMessage({
-            text: data.message,
-            type: 'success'
-          });
-
-          // For existing users, try to load their portfolio data
-          loadExistingPortfolio(data.data.websiteProfile.pk);
-        } else {
-          setMessage({
-            text: 'Registration successful! Now let\'s build your portfolio.',
-            type: 'success'
-          });
-
-          // Move to builder after a short delay for new users
-          setTimeout(() => {
-            setCurrentView('builder');
-          }, 2000);
-        }
-      } else {
-        setMessage({
-          text: data.error || 'Registration failed. Please try again.',
-          type: 'error'
-        });
-      }
-    } catch (error) {
-      setMessage({
-        text: 'Network error. Please check if the backend server is running.',
-        type: 'error'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadExistingPortfolio = async (websiteProfilePk) => {
-    try {
-      const apiBaseUrl = getApiBaseUrl();
-      const response = await fetch(`${apiBaseUrl}/api/portfolio/business/${websiteProfilePk}`);
-      const data = await response.json();
-
-      if (data.success && data.data.overview) {
-        // User has existing portfolio data - go to preview
-        setPortfolioData({
-          websiteProfile: data.data.websiteProfile,
-          overview: data.data.overview,
-          sections: data.data.sections || []
-        });
-
-        setTimeout(() => {
-          setCurrentView('preview');
-          setMessage({
-            text: 'Welcome back! Here\'s your portfolio. You can edit or publish it.',
-            type: 'success'
-          });
-        }, 2000);
-      } else {
-        // User exists but no portfolio data - go to builder
-        setTimeout(() => {
-          setCurrentView('builder');
-          setMessage({
-            text: 'Welcome back! Let\'s complete your portfolio setup.',
-            type: 'success'
-          });
-        }, 2000);
-      }
-    } catch (error) {
-      console.error('Error loading existing portfolio:', error);
-      // Default to builder if there's an error
-      setTimeout(() => {
-        setCurrentView('builder');
-        setMessage({
-          text: 'Welcome back! Let\'s set up your portfolio.',
-          type: 'success'
-        });
-      }, 2000);
-    }
-  };
-
-  const handlePortfolioComplete = (data) => {
-    setPortfolioData(data);
-    setCurrentView('preview');
-  };
-
-  const handleEditPortfolio = () => {
-    setCurrentView('builder');
-  };
-
-  const handlePublish = () => {
-    const portfolioUrl = getPortfolioUrl(websiteProfileData.websiteProfile.subdomain);
-    alert(`🎉 Congratulations! Your portfolio is now live at ${portfolioUrl}`);
-    window.open(portfolioUrl, '_blank');
-  };
-
-  const handleBackToLanding = () => {
-    setCurrentView('landing');
-    setWebsiteProfileData(null);
-    setPortfolioData(null);
-    setMessage({ text: '', type: '' });
-    setFormData({ email: '', subdomain: '' });
-  };
-
-  // Show public portfolio for subdomain access
-  if (currentView === 'public' && subdomainDomain) {
-    return <PublicPortfolio subdomain={subdomainDomain} />;
-  }
-
-  if (currentView === 'builder' && websiteProfileData) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <button
-          className="fixed top-6 left-6 z-50 bg-white hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-xl font-semibold shadow-lg border border-gray-200 transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
-          onClick={handleBackToLanding}
-        >
-          ← Back to Landing
-        </button>
-        <PortfolioBuilder
-          websiteProfileData={websiteProfileData}
-          onComplete={handlePortfolioComplete}
-        />
-      </div>
-    );
-  }
-
-  if (currentView === 'preview' && portfolioData) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <button
-          className="fixed top-6 left-6 z-50 bg-white hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-xl font-semibold shadow-lg border border-gray-200 transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
-          onClick={handleBackToLanding}
-        >
-          ← Back to Landing
-        </button>
-        <PortfolioPreview
-          portfolioData={portfolioData}
-          onEdit={handleEditPortfolio}
-          onPublish={handlePublish}
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-600">
@@ -315,48 +106,94 @@ const LandingPage = () => {
   );
 };
 
+// Component to check if we're on a subdomain and redirect accordingly
+// This component wraps all routes and intercepts subdomain visits
+// When on a subdomain (e.g., mikesplumbing.localhost:3000), it bypasses all React routes
+// and directly shows the PublicPortfolio component for that subdomain
+const SubdomainHandler = ({ children }) => {
+  const [isSubdomain, setIsSubdomain] = useState(false);
+  const [subdomain, setSubdomain] = useState(null);
+
+  useEffect(() => {
+    const detectSubdomain = () => {
+      const hostname = getCurrentDomain();
+      const baseDomain = getBaseDomain();
+
+      console.log('SubdomainHandler: Detecting subdomain', { hostname, baseDomain });
+
+      // Check if we're on a subdomain (not the base domain or www)
+      if (hostname !== baseDomain && hostname !== `www.${baseDomain}` && !hostname.startsWith('www.') && hostname !== process.env.REACT_APP_HOST) {
+        // Extract the subdomain part (everything before the base domain)
+        const parts = hostname.split('.');
+        if (parts.length > 1 && hostname !== baseDomain) {
+          const subdomainPart = parts[0];
+          console.log('SubdomainHandler: Subdomain detected', subdomainPart);
+          setSubdomain(subdomainPart);
+          setIsSubdomain(true);
+          return;
+        }
+      }
+
+      // Default to not a subdomain
+      console.log('SubdomainHandler: No subdomain detected, using normal routing');
+      setIsSubdomain(false);
+      setSubdomain(null);
+    };
+
+    detectSubdomain();
+  }, []);
+
+  // If we're on a subdomain, always show the PublicPortfolio component
+  if (isSubdomain && subdomain) {
+    return <PublicPortfolio subdomain={subdomain} />;
+  }
+
+  // Otherwise, render the normal routing
+  return children;
+};
+
 // Main App component with routing
 function App() {
   return (
     <AuthProvider>
       <Router>
-        <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
+        <SubdomainHandler>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/" element={<LandingPage />} />
 
-          {/* Protected routes */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
+            {/* Authentication routes with redirect logic */}
+            <Route
+              path="/login"
+              element={
+                <AuthenticatedRedirect>
+                  <Login />
+                </AuthenticatedRedirect>
+              }
+            />
+            <Route
+              path="/signup"
+              element={
+                <AuthenticatedRedirect>
+                  <Signup />
+                </AuthenticatedRedirect>
+              }
+            />
 
-          {/* Redirect authenticated users away from login/signup */}
-          <Route
-            path="/login"
-            element={
-              <AuthenticatedRedirect>
-                <Login />
-              </AuthenticatedRedirect>
-            }
-          />
-          <Route
-            path="/signup"
-            element={
-              <AuthenticatedRedirect>
-                <Signup />
-              </AuthenticatedRedirect>
-            }
-          />
+            {/* Protected routes */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Catch all route */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+            {/* Catch all route */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </SubdomainHandler>
       </Router>
     </AuthProvider>
   );

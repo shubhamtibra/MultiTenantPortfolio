@@ -261,6 +261,104 @@ router.get('/business/:businessPk', async (req, res) => {
     }
 });
 
+// Get user's portfolio by user ID
+router.get('/user/:userPk', async (req, res) => {
+    try {
+        const { db } = req.ctx;
+        const { userPk } = req.params;
+
+        // Find user's organization and business
+        const user = await db.User.findByPk(userPk);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        // Find business for this user's organization
+        const business = await db.Business.findOne({
+            where: { orgPk: user.orgPk },
+            include: [{
+                model: db.WebsiteProfile
+            }]
+        });
+
+        if (!business) {
+            return res.status(404).json({
+                success: false,
+                error: 'No portfolio found for this user',
+                hasPortfolio: false
+            });
+        }
+
+        const portfolio = await getCompletePortfolio(db, business.pk);
+
+        if (!portfolio) {
+            return res.status(404).json({
+                success: false,
+                error: 'Portfolio data not found',
+                hasPortfolio: false
+            });
+        }
+
+        res.json({
+            success: true,
+            data: portfolio,
+            hasPortfolio: true
+        });
+    } catch (error) {
+        console.error('Error fetching user portfolio:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch portfolio'
+        });
+    }
+});
+
+// Get portfolio by subdomain
+router.get('/subdomain/:subdomain', async (req, res) => {
+    try {
+        const { db } = req.ctx;
+        const { subdomain } = req.params;
+
+        // Find the website profile by subdomain
+        const websiteProfile = await db.WebsiteProfile.findOne({
+            where: { subdomain: subdomain, isActive: true },
+            include: [{
+                model: db.Business
+            }]
+        });
+
+        if (!websiteProfile || !websiteProfile.Business) {
+            return res.status(404).json({
+                success: false,
+                error: 'Portfolio not found for this subdomain'
+            });
+        }
+
+        const portfolio = await getCompletePortfolio(db, websiteProfile.Business.pk);
+
+        if (!portfolio) {
+            return res.status(404).json({
+                success: false,
+                error: 'Portfolio data not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            data: portfolio
+        });
+    } catch (error) {
+        console.error('Error fetching portfolio by subdomain:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch portfolio'
+        });
+    }
+});
+
 // Helper function to get complete portfolio data
 async function getCompletePortfolio(db, businessPk) {
     const business = await db.Business.findByPk(businessPk, {
@@ -292,7 +390,82 @@ async function getCompletePortfolio(db, businessPk) {
         return null;
     }
 
+    // Transform data to match PublicPortfolio component expectations
+    const overview = {
+        companyName: business.publicName || business.legalName,
+        companyTitle: business.tagline || business.publicName,
+        companyDescription: business.about || `Professional ${business.publicName} services`,
+        companyEmail: business.email,
+        companyPhone: business.phone,
+        companyAddress: [business.addressLine1, business.addressLine2, business.city, business.region, business.postalCode].filter(Boolean).join(', '),
+        companyRating: business.Testimonials?.length > 0
+            ? Math.round(business.Testimonials.reduce((sum, t) => sum + (t.rating || 5), 0) / business.Testimonials.length)
+            : 5, // Calculate average rating from testimonials, default to 5
+        companyLogo: null // Would need to be handled by file upload
+    };
+
+    // Transform services to sections format with more details
+    const sections = business.Services?.map(service => ({
+        title: service.name,
+        description: service.BusinessService?.customDescription || service.description,
+        logo: null, // Would need service logos
+        buttonText: "Get Quote",
+        category: service.category,
+        WebsiteProfileSectionItems: [] // Could be populated from service details
+    })) || [];
+
+    // Add service areas as a special section if they exist
+    if (business.ServiceAreas && business.ServiceAreas.length > 0) {
+        sections.push({
+            title: "Service Areas",
+            description: "We proudly serve the following areas:",
+            logo: null,
+            buttonText: "Contact Us",
+            category: "Service Areas",
+            WebsiteProfileSectionItems: business.ServiceAreas.map(area => ({
+                itemTitle: area.label,
+                itemDescription: `${area.coverageType}: ${area.value}`,
+                itemButtonText: "Get Quote"
+            }))
+        });
+    }
+
+    // Add testimonials as a section if they exist
+    if (business.Testimonials && business.Testimonials.length > 0) {
+        sections.push({
+            title: "Customer Reviews",
+            description: "What our customers are saying about us:",
+            logo: null,
+            buttonText: "Read More Reviews",
+            category: "Testimonials",
+            WebsiteProfileSectionItems: business.Testimonials.map(testimonial => ({
+                itemTitle: testimonial.authorName || "Satisfied Customer",
+                itemDescription: `"${testimonial.quote}" ${testimonial.rating ? `- ${testimonial.rating}/5 stars` : ''}`,
+                itemButtonText: "Leave Review"
+            }))
+        });
+    }
+
+    // Add licenses as a section if they exist
+    if (business.Licenses && business.Licenses.length > 0) {
+        sections.push({
+            title: "Licenses & Certifications",
+            description: "We are fully licensed and certified:",
+            logo: null,
+            buttonText: "Verify License",
+            category: "Licenses",
+            WebsiteProfileSectionItems: business.Licenses.map(license => ({
+                itemTitle: `License #${license.licenseNo}`,
+                itemDescription: `${license.authority}${license.state ? ` - ${license.state}` : ''}${license.expiresOn ? ` (Expires: ${new Date(license.expiresOn).toLocaleDateString()})` : ''}`,
+                itemButtonText: "Verify"
+            }))
+        });
+    }
+
     return {
+        overview: overview,
+        sections: sections,
+        // Keep original structure for backward compatibility
         business: business,
         websiteProfile: business.WebsiteProfiles?.[0] || null,
         services: business.Services || [],

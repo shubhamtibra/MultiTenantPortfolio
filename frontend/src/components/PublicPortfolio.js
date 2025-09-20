@@ -98,6 +98,15 @@ const PublicPortfolio = ({ subdomain }) => {
 
   const { overview, sections } = portfolioData;
 
+  // Separate sections by category for better organization
+  const servicesSections = sections?.filter(section =>
+    !['Service Areas', 'Customer Reviews', 'Licenses & Certifications'].includes(section.title)
+  ) || [];
+
+  const serviceAreasSection = sections?.find(section => section.title === 'Service Areas');
+  const testimonialsSection = sections?.find(section => section.title === 'Customer Reviews');
+  const licensesSection = sections?.find(section => section.title === 'Licenses & Certifications');
+
   return (
     <div className="public-portfolio">
       {/* Header Section */}
@@ -126,32 +135,46 @@ const PublicPortfolio = ({ subdomain }) => {
       </header>
 
       {/* Hero Section */}
-      <section className="hero">
+      <section className="hero" id="home">
         <div className="hero-content">
           <h1 className="hero-title">{overview.companyTitle}</h1>
           <p className="hero-description">{overview.companyDescription}</p>
+          <div className="hero-stats">
+            <div className="stat-item">
+              <div className="stat-number">{overview.companyRating}</div>
+              <div className="stat-label">Google Rating</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-number">100+</div>
+              <div className="stat-label">Happy Customers</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-number">24/7</div>
+              <div className="stat-label">Support</div>
+            </div>
+          </div>
           <div className="hero-actions">
             <a href={`tel:${overview.companyPhone}`} className="cta-button primary">
-              Call Now
+              📞 Call Now
             </a>
             <a href={`mailto:${overview.companyEmail}`} className="cta-button secondary">
-              Get Quote
+              ✉️ Get Quote
             </a>
           </div>
         </div>
       </section>
 
       {/* Services Section */}
-      {sections && sections.length > 0 && (
-        <section className="services">
+      {servicesSections && servicesSections.length > 0 && (
+        <section className="services" id="services">
           <div className="services-container">
             <h2 className="services-title">Our Services</h2>
             <div className="services-grid">
-              {sections.map((section, index) => (
+              {servicesSections.map((section, index) => (
                 <div
                   key={index}
                   className={`service-card ${expandedCard === index ? 'expanded' : ''}`}
-                  onClick={() => setExpandedCard(expandedCard === index ? null : index)}
+                  onClick={() => { }}
                 >
                   <div className="service-image">
                     {section.logo ? (
@@ -165,7 +188,11 @@ const PublicPortfolio = ({ subdomain }) => {
                     <p className="service-description">{section.description}</p>
 
                     {section.buttonText && (
-                      <button className="service-button" onClick={(e) => e.stopPropagation()}>
+                      <button className="service-button" onClick={(e) => {
+                        e.stopPropagation()
+                        handleQuoteRequest(section.title);
+                      }
+                      }>
                         {section.buttonText}
                       </button>
                     )}
@@ -210,8 +237,77 @@ const PublicPortfolio = ({ subdomain }) => {
         </section>
       )}
 
+      {/* Service Areas Section */}
+      {serviceAreasSection && serviceAreasSection.WebsiteProfileSectionItems && serviceAreasSection.WebsiteProfileSectionItems.length > 0 && (
+        <section className="service-areas" id="service-areas">
+          <div className="service-areas-container">
+            <h2 className="section-title">{serviceAreasSection.title}</h2>
+            <p className="section-description">{serviceAreasSection.description}</p>
+            <div className="service-areas-grid">
+              {serviceAreasSection.WebsiteProfileSectionItems.map((area, index) => (
+                <div key={index} className="service-area-card">
+                  <div className="area-icon">📍</div>
+                  <h4 className="area-name">{area.itemTitle}</h4>
+                  <p className="area-details">{area.itemDescription}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Testimonials Section */}
+      {testimonialsSection && testimonialsSection.WebsiteProfileSectionItems && testimonialsSection.WebsiteProfileSectionItems.length > 0 && (
+        <section className="testimonials" id="testimonials">
+          <div className="testimonials-container">
+            <h2 className="section-title">{testimonialsSection.title}</h2>
+            <p className="section-description">{testimonialsSection.description}</p>
+            <div className="testimonials-grid">
+              {testimonialsSection.WebsiteProfileSectionItems.map((testimonial, index) => (
+                <div key={index} className="testimonial-card">
+                  <div className="testimonial-quote">
+                    <div className="quote-icon">"</div>
+                    <p className="quote-text">{testimonial.itemDescription}</p>
+                  </div>
+                  <div className="testimonial-author">
+                    <div className="author-avatar">👤</div>
+                    <div className="author-info">
+                      <h4 className="author-name">{testimonial.itemTitle}</h4>
+                      <div className="author-rating">
+                        {renderStars(5)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Licenses Section */}
+      {licensesSection && licensesSection.WebsiteProfileSectionItems && licensesSection.WebsiteProfileSectionItems.length > 0 && (
+        <section className="licenses" id="licenses">
+          <div className="licenses-container">
+            <h2 className="section-title">{licensesSection.title}</h2>
+            <p className="section-description">{licensesSection.description}</p>
+            <div className="licenses-grid">
+              {licensesSection.WebsiteProfileSectionItems.map((license, index) => (
+                <div key={index} className="license-card text-black bg-transparent">
+                  <div className="license-icon">🏆</div>
+                  <div className="license-content">
+                    <h4 className="license-title">{license.itemTitle}</h4>
+                    <p className="license-details">{license.itemDescription}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Contact Section */}
-      <section className="contact">
+      <section className="contact" id="contact">
         <div className="contact-container">
           <h2>Get In Touch</h2>
           <p>Ready to get started? Contact us today for a free consultation.</p>

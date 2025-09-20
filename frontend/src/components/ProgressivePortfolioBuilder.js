@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getApiBaseUrl } from '../utils/domain';
+import { getApiBaseUrl, getPortfolioUrl } from '../utils/domain';
 import ImageUpload from './ImageUpload';
 import './ProgressivePortfolioBuilder.css';
 
-const ProgressivePortfolioBuilder = ({ onComplete, onCancel }) => {
+const ProgressivePortfolioBuilder = ({ onComplete, onCancel, existingData = null, isEditing = false }) => {
     const { user } = useAuth();
     const [currentStep, setCurrentStep] = useState(1);
     const [loading, setLoading] = useState(false);
@@ -44,10 +44,66 @@ const ProgressivePortfolioBuilder = ({ onComplete, onCancel }) => {
 
     const [availableServices, setAvailableServices] = useState([]);
 
-    // Load available services on component mount
+    // Load existing data when editing
     useEffect(() => {
-        loadAvailableServices();
-    }, []);
+        if (isEditing && existingData) {
+            console.log('Loading existing data for editing:', existingData);
+
+            // Transform existing data to match form structure
+            const transformedData = {
+                business: {
+                    legalName: existingData.business?.legalName || '',
+                    publicName: existingData.business?.publicName || '',
+                    tagline: existingData.business?.tagline || '',
+                    about: existingData.business?.about || '',
+                    email: existingData.business?.email || user?.email || '',
+                    phone: existingData.business?.phone || '',
+                    website: existingData.business?.website || '',
+                    addressLine1: existingData.business?.addressLine1 || '',
+                    addressLine2: existingData.business?.addressLine2 || '',
+                    city: existingData.business?.city || '',
+                    region: existingData.business?.region || '',
+                    postalCode: existingData.business?.postalCode || '',
+                    country: existingData.business?.country || 'US',
+                    yearsInBusiness: existingData.business?.yearsInBusiness || '',
+                    licensed: existingData.business?.licensed ?? true,
+                    insured: existingData.business?.insured ?? true,
+                    subdomain: existingData.websiteProfile?.subdomain || ''
+                },
+                services: (existingData.services || []).map(service => ({
+                    servicePk: service.pk,
+                    name: service.name,
+                    description: service.description,
+                    category: service.category,
+                    customDescription: service.BusinessService?.customDescription || service.customDescription || ''
+                })),
+                serviceAreas: (existingData.serviceAreas || []).map(area => ({
+                    label: area.label,
+                    value: area.value,
+                    coverageType: area.coverageType
+                })),
+                testimonials: (existingData.testimonials || []).map(testimonial => ({
+                    authorName: testimonial.authorName,
+                    quote: testimonial.quote,
+                    rating: testimonial.rating,
+                    sortOrder: testimonial.sortOrder
+                })),
+                licenses: (existingData.licenses || []).map(license => ({
+                    licenseNo: license.licenseNo,
+                    authority: license.authority,
+                    state: license.state,
+                    expiresOn: license.expiresOn ? new Date(license.expiresOn).toISOString().split('T')[0] : ''
+                }))
+            };
+
+            setFormData(transformedData);
+        }
+    }, [isEditing, existingData, user?.email]);
+
+    // Load available services on component mount
+    // useEffect(() => {
+    //     loadAvailableServices();
+    // }, []);
 
     const loadAvailableServices = async () => {
         try {
@@ -80,7 +136,8 @@ const ProgressivePortfolioBuilder = ({ onComplete, onCancel }) => {
             business: {
                 ...prev.business,
                 publicName: value,
-                subdomain: subdomain
+                // Only auto-generate subdomain if not editing or if subdomain is empty
+                subdomain: (isEditing && prev.business.subdomain) ? prev.business.subdomain : subdomain
             }
         }));
     };
@@ -158,12 +215,30 @@ const ProgressivePortfolioBuilder = ({ onComplete, onCancel }) => {
             const data = await response.json();
 
             if (data.success) {
-                setMessage({ text: 'Portfolio created successfully!', type: 'success' });
+                const successMessage = isEditing
+                    ? 'Portfolio updated successfully! Redirecting to your website...'
+                    : 'Portfolio created successfully! Redirecting to your website...';
+
+                setMessage({ text: successMessage, type: 'success' });
+
                 setTimeout(() => {
-                    onComplete(data.data);
-                }, 1500);
+                    // Get the subdomain from the form data
+                    const subdomain = formData.business.subdomain;
+                    if (subdomain) {
+                        // Redirect to the subdomain URL
+                        const portfolioUrl = getPortfolioUrl(subdomain);
+                        window.location.href = portfolioUrl;
+                    } else {
+                        // Fallback to calling onComplete
+                        onComplete(data.data);
+                    }
+                }, 2000);
             } else {
-                setMessage({ text: data.error || 'Failed to create portfolio', type: 'error' });
+                const errorMessage = isEditing
+                    ? data.error || 'Failed to update portfolio'
+                    : data.error || 'Failed to create portfolio';
+
+                setMessage({ text: errorMessage, type: 'error' });
             }
         } catch (error) {
             setMessage({ text: 'Network error. Please try again.', type: 'error' });
@@ -185,8 +260,8 @@ const ProgressivePortfolioBuilder = ({ onComplete, onCancel }) => {
             <div className="builder-container">
                 {/* Header with progress */}
                 <div className="builder-header">
-                    <h1>Create Your Portfolio</h1>
-                    <p>Build your professional portfolio step by step</p>
+                    <h1>{isEditing ? 'Edit Your Portfolio' : 'Create Your Portfolio'}</h1>
+                    <p>{isEditing ? 'Update your professional portfolio information' : 'Build your professional portfolio step by step'}</p>
 
                     {/* Progress indicator */}
                     <div className="progress-steps">
@@ -281,7 +356,10 @@ const ProgressivePortfolioBuilder = ({ onComplete, onCancel }) => {
                                 onClick={handleComplete}
                                 disabled={loading}
                             >
-                                {loading ? 'Creating Portfolio...' : 'Complete Portfolio'}
+                                {loading
+                                    ? (isEditing ? 'Updating Portfolio...' : 'Creating Portfolio...')
+                                    : (isEditing ? 'Update Portfolio' : 'Complete Portfolio')
+                                }
                             </button>
                         )}
                     </div>
@@ -508,7 +586,7 @@ const ServicesStep = ({ data, availableServices, onAdd, onRemove, onUpdate }) =>
             servicePk: null,
             name: '',
             description: '',
-            category: 'Custom',
+            category: '',
             customDescription: ''
         });
     };
@@ -520,7 +598,7 @@ const ServicesStep = ({ data, availableServices, onAdd, onRemove, onUpdate }) =>
 
             {/* Add service section */}
             <div className="add-service-section">
-                <div className="service-selector">
+                {/* <div className="service-selector">
                     <select
                         value={selectedServiceId}
                         onChange={(e) => setSelectedServiceId(e.target.value)}
@@ -543,10 +621,10 @@ const ServicesStep = ({ data, availableServices, onAdd, onRemove, onUpdate }) =>
 
                 <div className="or-divider">
                     <span>or</span>
-                </div>
+                </div> */}
 
                 <button className="btn btn-outline" onClick={addCustomService}>
-                    Add Custom Service
+                    Add a Service
                 </button>
             </div>
 
@@ -806,7 +884,7 @@ const LicensesStep = ({ data, onAdd, onRemove, onUpdate }) => {
                             </button>
                         </div>
 
-                        <div className="form-grid">
+                        <div className="form-grid text-black">
                             <div className="form-group">
                                 <label>License Number</label>
                                 <input
