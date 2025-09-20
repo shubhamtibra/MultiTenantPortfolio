@@ -1,14 +1,14 @@
 const express = require('express');
 const cors = require('cors');
-const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
 require('dotenv').config();
 
 const loadDb = require('./models');
 const db = loadDb();
-const { router: authRoutes } = require('./routes/auth');
-const portfolioRoutes = require('./routes/portfolio');
+const { verifyToken } = require('./middleware/auth');
+const publicRoutes = require('./routes/public');
+const authenticatedRoutes = require('./routes/authenticated');
+const uploadRoutes = require('./routes/upload');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -41,97 +41,25 @@ app.use((req, res, next) => {
   req.ctx = { db };
   next();
 });
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-// Multer configuration for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    // Generate unique filename with timestamp
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const fileFilter = (req, file, cb) => {
-  // Accept only image files
-  if (file.mimetype.startsWith('image/')) {
-    cb(null, true);
-  } else {
-    cb(new Error('Only image files are allowed!'), false);
-  }
-};
-
-const upload = multer({
-  storage: storage,
-  fileFilter: fileFilter,
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
-  }
-});
 
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Authentication routes
-app.use('/api/auth', authRoutes);
+// Public routes (no authentication required)
+app.use('/api', publicRoutes);
 
-// Portfolio routes
-app.use('/api/portfolio', portfolioRoutes);
+// Upload routes (mixed - some public, some authenticated)
+app.use('/api', uploadRoutes);
+
+// Authenticated routes (require valid JWT token)
+app.use('/api', verifyToken, authenticatedRoutes);
 
 // Routes
 app.get('/', (req, res) => {
   res.json({ message: 'Multi-Tenant Portfolio Backend API' });
 });
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
-});
-
-// File upload endpoint
-app.post('/api/upload', upload.single('logo'), (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
-    }
-
-    const fileUrl = `/uploads/${req.file.filename}`;
-
-    res.json({
-      success: true,
-      message: 'File uploaded successfully',
-      fileUrl: fileUrl,
-      filename: req.file.filename
-    });
-  } catch (error) {
-    console.error('Upload error:', error);
-    res.status(500).json({ error: 'Failed to upload file' });
-  }
-});
-
-// Delete uploaded file endpoint
-app.delete('/api/upload/:filename', (req, res) => {
-  try {
-    const { filename } = req.params;
-    const filePath = path.join(__dirname, 'uploads', filename);
-
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-      res.json({ success: true, message: 'File deleted successfully' });
-    } else {
-      res.status(404).json({ error: 'File not found' });
-    }
-  } catch (error) {
-    console.error('Delete error:', error);
-    res.status(500).json({ error: 'Failed to delete file' });
-  }
-});
+// Health check and file uploads are now handled in separate route modules
 
 
 // Start server

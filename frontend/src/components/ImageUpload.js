@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { getApiBaseUrl } from '../utils/domain';
+import { uploadApiClient } from '../services/apiClient';
 import './ImageUpload.css';
 
 const ImageUpload = ({
@@ -34,18 +35,14 @@ const ImageUpload = ({
         setUploading(true);
 
         try {
-            const formData = new FormData();
-            formData.append('logo', file);
-
-            const apiBaseUrl = getApiBaseUrl();
-            const response = await fetch(`${apiBaseUrl}/api/upload`, {
-                method: 'POST',
-                body: formData,
+            const data = await uploadApiClient.uploadFile(file, (progressEvent) => {
+                // Optional: Handle upload progress
+                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                console.log(`Upload progress: ${percentCompleted}%`);
             });
 
-            const data = await response.json();
-
             if (data.success) {
+                const apiBaseUrl = getApiBaseUrl();
                 const fullImageUrl = `${apiBaseUrl}${data.fileUrl}`;
                 onImageChange(fullImageUrl);
             } else {
@@ -92,10 +89,7 @@ const ImageUpload = ({
                 const urlParts = currentImage.split('/');
                 const filename = urlParts[urlParts.length - 1];
 
-                const apiBaseUrl = getApiBaseUrl();
-                await fetch(`${apiBaseUrl}/api/upload/${filename}`, {
-                    method: 'DELETE',
-                });
+                await uploadApiClient.deleteFile(filename);
             } catch (error) {
                 console.error('Failed to delete image:', error);
             }

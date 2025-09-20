@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './PublicPortfolio.css';
 import { getApiBaseUrl, getMainAppUrl } from '../utils/domain';
+import { publicApiClient } from '../services/apiClient';
 import QuoteModal from './QuoteModal';
 
 const PublicPortfolio = ({ subdomain }) => {
@@ -25,9 +26,7 @@ const PublicPortfolio = ({ subdomain }) => {
     const fetchPortfolioData = async () => {
       try {
         setLoading(true);
-        const apiBaseUrl = getApiBaseUrl();
-        const response = await fetch(`${apiBaseUrl}/api/portfolio/subdomain/${subdomain}`);
-        const data = await response.json();
+        const data = await publicApiClient.portfolio.getBySubdomain(subdomain);
 
         if (data.success) {
           setPortfolioData(data.data);
@@ -293,7 +292,7 @@ const PublicPortfolio = ({ subdomain }) => {
             <p className="section-description">{licensesSection.description}</p>
             <div className="licenses-grid">
               {licensesSection.WebsiteProfileSectionItems.map((license, index) => (
-                <div key={index} className="license-card text-black bg-transparent">
+                <div key={index} className="license-card">
                   <div className="license-icon">🏆</div>
                   <div className="license-content">
                     <h4 className="license-title">{license.itemTitle}</h4>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getApiBaseUrl, getPortfolioUrl } from '../utils/domain';
+import { authenticatedApiClient } from '../services/apiClient';
 import ProgressivePortfolioBuilder from './ProgressivePortfolioBuilder';
 
 const Dashboard = () => {
@@ -40,9 +41,7 @@ const Dashboard = () => {
 
             try {
                 setLoading(true);
-                const apiBaseUrl = getApiBaseUrl();
-                const response = await fetch(`${apiBaseUrl}/api/portfolio/user/${user.pk}`);
-                const data = await response.json();
+                const data = await authenticatedApiClient.portfolio.getUserPortfolio(user.pk);
 
                 if (data.success) {
                     setPortfolioData(data.data);
@@ -75,9 +74,7 @@ const Dashboard = () => {
         if (!user?.pk) return;
 
         try {
-            const apiBaseUrl = getApiBaseUrl();
-            const response = await fetch(`${apiBaseUrl}/api/portfolio/user/${user.pk}`);
-            const data = await response.json();
+            const data = await authenticatedApiClient.portfolio.getUserPortfolio(user.pk);
 
             if (data.success) {
                 setPortfolioData(data.data);

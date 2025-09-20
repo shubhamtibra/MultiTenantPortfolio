@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getApiBaseUrl, getPortfolioUrl } from '../utils/domain';
+import { publicApiClient, authenticatedApiClient } from '../services/apiClient';
 import ImageUpload from './ImageUpload';
 import './ProgressivePortfolioBuilder.css';
 
@@ -107,9 +108,7 @@ const ProgressivePortfolioBuilder = ({ onComplete, onCancel, existingData = null
 
     const loadAvailableServices = async () => {
         try {
-            const apiBaseUrl = getApiBaseUrl();
-            const response = await fetch(`${apiBaseUrl}/api/portfolio/services`);
-            const data = await response.json();
+            const data = await publicApiClient.portfolio.getServices();
             if (data.success) {
                 setAvailableServices(data.data);
             }
@@ -200,19 +199,10 @@ const ProgressivePortfolioBuilder = ({ onComplete, onCancel, existingData = null
         setMessage({ text: '', type: '' });
 
         try {
-            const apiBaseUrl = getApiBaseUrl();
-            const response = await fetch(`${apiBaseUrl}/api/portfolio/complete`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    userPk: user?.pk,
-                    ...formData
-                })
+            const data = await authenticatedApiClient.portfolio.create({
+                userPk: user?.pk,
+                ...formData
             });
-
-            const data = await response.json();
 
             if (data.success) {
                 const successMessage = isEditing

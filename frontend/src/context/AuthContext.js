@@ -1,38 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import { publicApiClient, authenticatedApiClient } from '../services/apiClient';
 
 const AuthContext = createContext();
-
-// Configure axios defaults
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-axios.defaults.baseURL = API_BASE_URL;
-
-// Add request interceptor to include auth token
-axios.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
-    }
-);
-
-// Add response interceptor to handle token expiration
-axios.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        if (error.response?.status === 401) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = '/login';
-        }
-        return Promise.reject(error);
-    }
-);
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
@@ -48,8 +17,12 @@ export const AuthProvider = ({ children }) => {
             if (token && userData) {
                 try {
                     // Verify token with backend
-                    const response = await axios.get('/api/auth/verify');
-                    setUser(JSON.parse(userData));
+                    const response = await authenticatedApiClient.auth.verify();
+                    if (response.success) {
+                        setUser(JSON.parse(userData));
+                    } else {
+                        throw new Error('Token verification failed');
+                    }
                 } catch (error) {
                     // Token is invalid, clear localStorage
                     localStorage.removeItem('token');
@@ -67,13 +40,13 @@ export const AuthProvider = ({ children }) => {
             setError(null);
             setLoading(true);
 
-            const response = await axios.post('/api/auth/login', {
+            const response = await publicApiClient.auth.login({
                 email,
                 password
             });
 
-            if (response.data.success) {
-                const { user: userData, token } = response.data.data;
+            if (response.success) {
+                const { user: userData, token } = response.data;
 
                 // Store in localStorage
                 localStorage.setItem('token', token);
@@ -96,15 +69,15 @@ export const AuthProvider = ({ children }) => {
             setError(null);
             setLoading(true);
 
-            const response = await axios.post('/api/auth/signup', {
+            const response = await publicApiClient.auth.signup({
                 email,
                 password,
                 firstName,
                 lastName
             });
 
-            if (response.data.success) {
-                const { user: userData, token } = response.data.data;
+            if (response.success) {
+                const { user: userData, token } = response.data;
 
                 // Store in localStorage
                 localStorage.setItem('token', token);
@@ -133,13 +106,13 @@ export const AuthProvider = ({ children }) => {
         try {
             setError(null);
 
-            const response = await axios.put('/api/auth/profile', {
+            const response = await authenticatedApiClient.auth.updateProfile({
                 firstName,
                 lastName
             });
 
-            if (response.data.success) {
-                const updatedUser = response.data.data.user;
+            if (response.success) {
+                const updatedUser = response.data.user;
                 localStorage.setItem('user', JSON.stringify(updatedUser));
                 setUser(updatedUser);
                 return { success: true };
@@ -155,12 +128,12 @@ export const AuthProvider = ({ children }) => {
         try {
             setError(null);
 
-            const response = await axios.put('/api/auth/change-password', {
+            const response = await authenticatedApiClient.auth.changePassword({
                 currentPassword,
                 newPassword
             });
 
-            if (response.data.success) {
+            if (response.success) {
                 return { success: true };
             }
         } catch (error) {
